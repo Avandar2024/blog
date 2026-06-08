@@ -29,9 +29,9 @@ check: convert
 build: convert
     @zola build
 
-# Build for GitHub Pages. Set GITHUB_PAGES_BASE_URL first.
+# Build for GitHub Pages. Defaults to https://GITHUB_OWNER.github.io/GITHUB_REPO.
 build-pages: convert
-    @zola build --base-url "${GITHUB_PAGES_BASE_URL:?Set GITHUB_PAGES_BASE_URL, for example https://OWNER.github.io/REPO}"
+    @zola build --base-url "$(node ./scripts/github-pages-base-url.js)"
 
 # Build and deploy public/ to the GitHub Pages branch through the GitHub API.
 deploy-github-pages: build-pages

@@ -12,7 +12,7 @@ This repository is a Zola static blog. Site configuration lives in `zola.toml`. 
 - `just check`: convert content and run `zola check`.
 - `just build`: run `zola build` and write the static site to `public/`.
 - `just serve`: convert content and preview locally with Zola.
-- `just build-pages`: build for GitHub Pages using `GITHUB_PAGES_BASE_URL`.
+- `just build-pages`: build for GitHub Pages using `GITHUB_OWNER` and `GITHUB_REPO`; `GITHUB_PAGES_BASE_URL` is only an override.
 - `just deploy-github-pages`: build and deploy `public/` through the GitHub API.
 
 `just convert` invokes Pandoc through `scripts/convert-file.js`. Do not rely on generated temporary Markdown inside `typ_content/`; the recipes clean it.
@@ -31,7 +31,7 @@ Use short imperative commit subjects such as `Add search page` or `Fix post list
 
 ## Deployment Notes
 
-GitHub Pages deployment is documented in `docs/github-pages.md`. Unknown values stay in environment variables: `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`, and `GITHUB_PAGES_BASE_URL`. Run `just install-hooks` to use `.githooks/post-commit`; automatic deploys only run when `GITHUB_AUTO_DEPLOY=1`.
+GitHub Pages deployment is documented in `docs/github-pages.md`. Unknown values stay in environment variables: `GITHUB_OWNER`, `GITHUB_REPO`, and `GITHUB_TOKEN`. Run `just install-hooks` to use `.githooks/post-commit`; automatic deploys only run when `GITHUB_AUTO_DEPLOY=1`.
 
 ## Agent-Specific Instructions
 
