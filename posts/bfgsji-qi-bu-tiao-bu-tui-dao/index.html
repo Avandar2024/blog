@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>
+    
+      BFGS及其不跳步推导 · Avandar2024&#x27;s blog
+    
+  </title>
+  <meta name="description" content="Personal writing about coding and life.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="https://Avandar2024.github.io/blog/main.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.renderMathInElement) return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到正文</a>
+
+  <div class="language-switch" aria-label="当前语言">
+    <span aria-current="true">简体中文</span>
+  </div>
+
+  <div class="shell">
+    <header class="site-header">
+      <a class="brand" href="https://Avandar2024.github.io/blog">
+        <img class="brand-mark" src="https://Avandar2024.github.io/blog/brand-mark.svg" alt="" aria-hidden="true">
+        <span>Avandar2024&#x27;s blog</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        
+          
+            <a href="/">Home</a>
+          
+        
+          
+            <a href="/about/">About</a>
+          
+        
+          
+            <a href="/posts/">Writing</a>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Category</span>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Friends</span>
+          
+        
+          
+            <a href="/search/">Search</a>
+          
+        
+      </nav>
+    </header>
+
+    <main id="main-content" class="content" tabindex="-1">
+      
+  <article class="article prose">
+    <header class="article-header">
+      
+        <p class="article-date">2026-06-08</p>
+      
+      <h1>BFGS及其不跳步推导</h1>
+      
+      
+        <p class="article-date">12 min read</p>
+      
+    </header>
+    <h1 id="bfgs-ji-qi-bu-tiao-bu-tui-dao">BFGS 及其不跳步推导</h1>
+<p>BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian
+矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、正定性和逆
+Hessian 更新几个角度，把 BFGS 的公式一步一步推出。</p>
+<h2 id="cong-niu-dun-fa-kai-shi">从牛顿法开始</h2>
+<p>考虑无约束优化问题</p>
+<p>$$\min\limits_{x}f(x)$$</p>
+<p>设当前点为 $x_{k}$，梯度为</p>
+<p>$$g_{k} = \nabla f\left( x_{k} \right)$$</p>
+<p>在 $x_{k}$ 附近令步长方向为 $p$，对 $f\left( x_{k} + p \right)$ 做二阶
+Taylor 展开：</p>
+<p>$$f\left( x_{k} + p \right) \approx f\left( x_{k} \right) + g_{k}^{T}p + \frac{1}{2}p^{T}G_{k}p$$</p>
+<p>其中</p>
+<p>$$G_{k} = \nabla^{2}f\left( x_{k} \right)$$</p>
+<p>是 Hessian 矩阵。为了最小化这个二次近似模型，对 $p$ 求梯度。常数项
+$f\left( x_{k} \right)$ 对 $p$ 的梯度为 $0$，线性项 $g_{k}^{T}p$
+的梯度为 $g_{k}$，二次项 $\frac{1}{2}p^{T}G_{k}p$ 在 $G_{k}$
+对称时的梯度为 $G_{k}p$。所以</p>
+<p>$$\nabla_{p}\left( f\left( x_{k} \right) + g_{k}^{T}p + \frac{1}{2}p^{T}G_{k}p \right) = g_{k} + G_{k}p$$</p>
+<p>令梯度为零：</p>
+<p>$$g_{k} + G_{k}p = 0$$</p>
+<p>两边同时减去 $g_{k}$：</p>
+<p>$$G_{k}p = - g_{k}$$</p>
+<p>如果 $G_{k}$ 可逆，两边左乘 $G_{k}^{- 1}$：</p>
+<p>$$G_{k}^{- 1}G_{k}p = - G_{k}^{- 1}g_{k}$$</p>
+<p>因为 $G_{k}^{- 1}G_{k} = I$，所以</p>
+<p>$$p = - G_{k}^{- 1}g_{k}$$</p>
+<p>这就是牛顿方向。难点在于 $G_{k}$ 往往很贵，求逆更贵，所以拟牛顿法用
+$B_{k}$ 近似 $G_{k}$，或用 $H_{k}$ 近似 $G_{k}^{- 1}$。</p>
+<h2 id="ni-niu-dun-tiao-jian">拟牛顿条件</h2>
+<p>一次迭代后定义</p>
+<p>$$s_{k} = x_{k + 1} - x_{k}$$</p>
+<p>和</p>
+<p>$$y_{k} = g_{k + 1} - g_{k}$$</p>
+<p>如果 Hessian 在 $x_{k}$ 到 $x_{k + 1}$ 之间变化不大，一阶 Taylor
+展开给出</p>
+<p>$$g_{k + 1} \approx g_{k} + G_{k + 1}\left( x_{k + 1} - x_{k} \right)$$</p>
+<p>把 $s_{k} = x_{k + 1} - x_{k}$ 代入：</p>
+<p>$$g_{k + 1} \approx g_{k} + G_{k + 1}s_{k}$$</p>
+<p>再把 $g_{k + 1} = g_{k} + y_{k}$ 代入：</p>
+<p>$$g_{k} + y_{k} \approx g_{k} + G_{k + 1}s_{k}$$</p>
+<p>两边同时减去 $g_{k}$：</p>
+<p>$$y_{k} \approx G_{k + 1}s_{k}$$</p>
+<p>拟牛顿法要求新的 Hessian 近似 $B_{k + 1}$ 精确满足这个关系：</p>
+<p>$$B_{k + 1}s_{k} = y_{k}$$</p>
+<p>这叫割线条件，也叫拟牛顿条件。</p>
+<p>如果改用逆 Hessian 近似 $H_{k + 1} \approx B_{k + 1}^{- 1}$，从</p>
+<p>$$B_{k + 1}s_{k} = y_{k}$$</p>
+<p>两边左乘 $B_{k + 1}^{- 1}$：</p>
+<p>$$B_{k + 1}^{- 1}B_{k + 1}s_{k} = B_{k + 1}^{- 1}y_{k}$$</p>
+<p>左边化简为 $s_{k}$，右边记为 $H_{k + 1}y_{k}$，得到</p>
+<p>$$H_{k + 1}y_{k} = s_{k}$$</p>
+<p>这就是逆形式的拟牛顿条件。</p>
+<h2 id="hessian-xing-shi-de-bfgs-geng-xin">Hessian 形式的 BFGS 更新</h2>
+<p>BFGS 对 Hessian 近似的更新为</p>
+<p>$$B_{k + 1} = B_{k} - \frac{B_{k}s_{k}s_{k}^{T}B_{k}}{s_{k}^{T}B_{k}s_{k}} + \frac{y_{k}y_{k}^{T}}{y_{k}^{T}s_{k}}$$</p>
+<p>下面验证它满足拟牛顿条件。为了减少下标，记</p>
+<p>$$s = s_{k},\quad y = y_{k},\quad B = B_{k}$$</p>
+<p>并写</p>
+<p>$$B^{+} = B - \frac{Bss^{T}B}{s^{T}Bs} + \frac{yy^{T}}{y^{T}s}$$</p>
+<p>计算 $B^{+}s$：</p>
+<p>$$B^{+}s = \left( B - \frac{Bss^{T}B}{s^{T}Bs} + \frac{yy^{T}}{y^{T}s} \right)s$$</p>
+<p>把乘法分配到三项：</p>
+<p>$$B^{+}s = Bs - \frac{\left( Bss^{T}B \right)s}{s^{T}Bs} + \frac{\left( yy^{T} \right)s}{y^{T}s}$$</p>
+<p>第二项中，矩阵乘法从右向左看：</p>
+<p>$$\left( Bss^{T}B \right)s = Bss^{T}Bs$$</p>
+<p>其中 $s^{T}Bs$ 是一个标量，因此</p>
+<p>$$Bss^{T}Bs = Bs\left( s^{T}Bs \right)$$</p>
+<p>所以</p>
+<p>$$\frac{\left( Bss^{T}B \right)s}{s^{T}Bs} = \frac{Bs\left( s^{T}Bs \right)}{s^{T}Bs} = Bs$$</p>
+<p>第三项同理：</p>
+<p>$$\left( yy^{T} \right)s = y\left( y^{T}s \right)$$</p>
+<p>于是</p>
+<p>$$\frac{\left( yy^{T} \right)s}{y^{T}s} = \frac{y\left( y^{T}s \right)}{y^{T}s} = y$$</p>
+<p>代回原式：</p>
+<p>$$B^{+}s = Bs - Bs + y$$</p>
+<p>前两项抵消：</p>
+<p>$$B^{+}s = y$$</p>
+<p>因此 BFGS 更新满足 $B_{k + 1}s_{k} = y_{k}$。</p>
+<h2 id="wei-shen-me-geng-xin-bao-chi-dui-cheng">为什么更新保持对称</h2>
+<p>假设 $B$ 对称，即 $B^{T} = B$。第一项 $B$ 对称。第二项的分子为
+$Bss^{T}B$，它的转置是</p>
+<p>$$\left( Bss^{T}B \right)^{T} = B^{T}\left( s^{T} \right)^{T}s^{T}B^{T}$$</p>
+<p>因为 $\left( s^{T} \right)^{T} = s$ 且 $B^{T} = B$，所以</p>
+<p>$$\left( Bss^{T}B \right)^{T} = Bss^{T}B$$</p>
+<p>分母 $s^{T}Bs$ 是标量，转置后不变，因此第二项对称。第三项满足</p>
+<p>$$\left( yy^{T} \right)^{T} = yy^{T}$$</p>
+<p>所以 $B^{+}$ 仍然对称。</p>
+<h2 id="zheng-ding-xing-de-wan-zheng-zheng-ming">正定性的完整证明</h2>
+<p>设 $B$ 正定，且曲率条件成立：</p>
+<p>$$y^{T}s &gt; 0$$</p>
+<p>任取非零向量 $z$，计算二次型：</p>
+<p>$$z^{T}B^{+}z = z^{T}\left( B - \frac{Bss^{T}B}{s^{T}Bs} + \frac{yy^{T}}{y^{T}s} \right)z$$</p>
+<p>分配乘法：</p>
+<p>$$z^{T}B^{+}z = z^{T}Bz - z^{T}\frac{Bss^{T}B}{s^{T}Bs}z + z^{T}\frac{yy^{T}}{y^{T}s}z$$</p>
+<p>把标量分母提出：</p>
+<p>$$z^{T}B^{+}z = z^{T}Bz - \frac{z^{T}Bss^{T}Bz}{s^{T}Bs} + \frac{z^{T}yy^{T}z}{y^{T}s}$$</p>
+<p>第二项分子中，$z^{T}Bs$ 是标量，$s^{T}Bz$ 也是标量。因为 $B$ 对称，</p>
+<p>$$s^{T}Bz = \left( z^{T}Bs \right)^{T} = z^{T}Bs$$</p>
+<p>所以</p>
+<p>$$z^{T}Bss^{T}Bz = \left( z^{T}Bs \right)\left( s^{T}Bz \right) = \left( z^{T}Bs \right)^{2}$$</p>
+<p>第三项分子为</p>
+<p>$$z^{T}yy^{T}z = \left( y^{T}z \right)^{2}$$</p>
+<p>于是</p>
+<p>$$z^{T}B^{+}z = z^{T}Bz - \frac{\left( z^{T}Bs \right)^{2}}{s^{T}Bs} + \frac{\left( y^{T}z \right)^{2}}{y^{T}s}$$</p>
+<p>因为 $B$ 正定，可以定义内积</p>
+<p>$$\langle z,s\rangle_{B} = z^{T}Bs$$</p>
+<p>Cauchy-Schwarz 不等式给出</p>
+<p>$$\left( z^{T}Bs \right)^{2} \leq \left( z^{T}Bz \right)\left( s^{T}Bs \right)$$</p>
+<p>由于 $s^{T}Bs &gt; 0$，两边除以它：</p>
+<p>$$\frac{\left( z^{T}Bs \right)^{2}}{s^{T}Bs} \leq z^{T}Bz$$</p>
+<p>因此</p>
+<p>$$z^{T}Bz - \frac{\left( z^{T}Bs \right)^{2}}{s^{T}Bs} \geq 0$$</p>
+<p>又因为 $y^{T}s &gt; 0$，</p>
+<p>$$\frac{\left( y^{T}z \right)^{2}}{y^{T}s} \geq 0$$</p>
+<p>所以</p>
+<p>$$z^{T}B^{+}z \geq 0$$</p>
+<p>还要证明严格大于零。若
+$z^{T}B^{+}z = 0$，上面两个非负项必须同时为零。第一部分为零意味着
+Cauchy-Schwarz 取等号，所以 $z$ 与 $s$ 线性相关，存在标量 $\alpha$ 使</p>
+<p>$$z = \alpha s$$</p>
+<p>第二部分为零意味着</p>
+<p>$$y^{T}z = 0$$</p>
+<p>代入 $z = \alpha s$：</p>
+<p>$$y^{T}(\alpha s) = 0$$</p>
+<p>把标量提出：</p>
+<p>$$\alpha y^{T}s = 0$$</p>
+<p>由于 $y^{T}s &gt; 0$，只能有</p>
+<p>$$\alpha = 0$$</p>
+<p>于是</p>
+<p>$$z = 0$$</p>
+<p>这和我们任取非零 $z$ 矛盾。因此对所有非零 $z$，</p>
+<p>$$z^{T}B^{+}z &gt; 0$$</p>
+<p>所以 $B^{+}$ 正定。</p>
+<h2 id="ni-hessian-xing-shi">逆 Hessian 形式</h2>
+<p>实际计算方向时，更常用 $H_{k} \approx B_{k}^{- 1}$，因为可以直接写</p>
+<p>$$p_{k} = - H_{k}g_{k}$$</p>
+<p>BFGS 的逆更新为</p>
+<p>$$H_{k + 1} = \left( I - \rho s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho y_{k}s_{k}^{T} \right) + \rho s_{k}s_{k}^{T}$$</p>
+<p>其中</p>
+<p>$$\rho = \frac{1}{y_{k}^{T}s_{k}}$$</p>
+<p>仍省略下标，定义</p>
+<p>$$H^{+} = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right) + \rho ss^{T}$$</p>
+<p>验证它满足逆拟牛顿条件 $H^{+}y = s$。先代入 $y$：</p>
+<p>$$H^{+}y = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right)y + \rho ss^{T}y$$</p>
+<p>先算最右边括号：</p>
+<p>$$\left( I - \rho ys^{T} \right)y = y - \rho ys^{T}y$$</p>
+<p>因为 $s^{T}y = y^{T}s$，且 $\rho = \frac{1}{y^{T}s}$，所以</p>
+<p>$$\rho s^{T}y = 1$$</p>
+<p>于是</p>
+<p>$$y - \rho ys^{T}y = y - y = 0$$</p>
+<p>第一大项变成</p>
+<p>$$\left( I - \rho sy^{T} \right)H0 = 0$$</p>
+<p>再算第二项：</p>
+<p>$$\rho ss^{T}y = \rho s\left( s^{T}y \right)$$</p>
+<p>代入 $\rho = \frac{1}{y^{T}s}$：</p>
+<p>$$\rho s\left( s^{T}y \right) = \left( \frac{1}{y^{T}s} \right)s\left( y^{T}s \right) = s$$</p>
+<p>因此</p>
+<p>$$H^{+}y = s$$</p>
+<p>逆拟牛顿条件成立。</p>
+<h2 id="ni-xing-shi-de-zhan-kai">逆形式的展开</h2>
+<p>从紧凑形式开始：</p>
+<p>$$H^{+} = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right) + \rho ss^{T}$$</p>
+<p>先展开右乘：</p>
+<p>$$H\left( I - \rho ys^{T} \right) = H - \rho Hys^{T}$$</p>
+<p>再左乘：</p>
+<p>$$\left( I - \rho sy^{T} \right)\left( H - \rho Hys^{T} \right)$$</p>
+<p>分成两部分：</p>
+<p>$$= I\left( H - \rho Hys^{T} \right) - \rho sy^{T}\left( H - \rho Hys^{T} \right)$$</p>
+<p>继续展开：</p>
+<p>$$= H - \rho Hys^{T} - \rho sy^{T}H + \rho^{2}sy^{T}Hys^{T}$$</p>
+<p>加上最后一项：</p>
+<p>$$H^{+} = H - \rho Hys^{T} - \rho sy^{T}H + \rho^{2}sy^{T}Hys^{T} + \rho ss^{T}$$</p>
+<p>其中 $y^{T}Hy$ 是标量，所以</p>
+<p>$$\rho^{2}sy^{T}Hys^{T} = \rho^{2}\left( y^{T}Hy \right)ss^{T}$$</p>
+<p>合并两个 $ss^{T}$ 项：</p>
+<p>$$H^{+} = H - \rho Hys^{T} - \rho sy^{T}H + \left( \rho + \rho^{2}y^{T}Hy \right)ss^{T}$$</p>
+<p>提取 $\rho$：</p>
+<p>$$\rho + \rho^{2}y^{T}Hy = \rho(1 + \rho y^{T}Hy)$$</p>
+<p>因此展开形式为</p>
+<p>$$H^{+} = H - \rho Hys^{T} - \rho sy^{T}H + \rho(1 + \rho y^{T}Hy)ss^{T}$$</p>
+<h2 id="suan-fa-liu-cheng">算法流程</h2>
+<p>BFGS 的一次迭代如下：</p>
+<ol>
+<li>
+<p>给定 $x_{k}$、$g_{k}$ 和正定矩阵 $H_{k}$。</p>
+</li>
+<li>
+<p>计算搜索方向：</p>
+<p>$$p_{k} = - H_{k}g_{k}$$</p>
+</li>
+<li>
+<p>用线搜索选择步长 $\alpha_{k}$，并更新：</p>
+<p>$$x_{k + 1} = x_{k} + \alpha_{k}p_{k}$$</p>
+</li>
+<li>
+<p>计算</p>
+<p>$$s_{k} = x_{k + 1} - x_{k}$$</p>
+<p>$$y_{k} = g_{k + 1} - g_{k}$$</p>
+</li>
+<li>
+<p>若 $y_{k}^{T}s_{k} &gt; 0$，令</p>
+<p>$$\rho_{k} = \frac{1}{y_{k}^{T}s_{k}}$$</p>
+<p>并更新</p>
+<p>$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$</p>
+</li>
+<li>
+<p>若 $y_{k}^{T}s_{k} \leq 0$
+或过小，应跳过本次更新、重新线搜索，或重置 $H_{k}$。</p>
+</li>
+</ol>
+<h2 id="xiao-jie">小结</h2>
+<p>BFGS
+的核心不是凭空构造一个公式，而是在满足拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。Hessian
+形式</p>
+<p>$$B_{k + 1} = B_{k} - \frac{B_{k}s_{k}s_{k}^{T}B_{k}}{s_{k}^{T}B_{k}s_{k}} + \frac{y_{k}y_{k}^{T}}{y_{k}^{T}s_{k}}$$</p>
+<p>说明它如何修正曲率；逆 Hessian 形式</p>
+<p>$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$</p>
+<p>则直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} &gt; 0$，BFGS
+就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。</p>
+
+  </article>
+
+    </main>
+
+    <footer class="site-footer">
+      <p>Copyright &copy; 2018-2026 Avandar2024</p>
+      <nav class="site-nav site-nav-footer" aria-label="页脚导航">
+        
+          
+            <a href="/">Home</a>
+          
+        
+          
+            <a href="/about/">About</a>
+          
+        
+          
+            <a href="/posts/">Writing</a>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Category</span>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Friends</span>
+          
+        
+          
+            <a href="/search/">Search</a>
+          
+        
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>
