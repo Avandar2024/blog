@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="intro prose">
+    <h1>{{ section.title }}</h1>
+    {% if section.description %}
+      <p>{{ section.description }}</p>
+    {% endif %}
+    {% if section.content %}
+      {{ section.content | safe }}
+    {% endif %}
+  </section>
+
+  {% if section.pages | length > 0 %}
+    <section class="writing">
+      <h2>Writing</h2>
+      <ul class="post-list">
+        {% for page in section.pages %}
+          <li>
+            <time datetime="{{ page.date | date(format="%Y-%m-%d") }}">{{ page.date | date(format="%Y-%m-%d") }}</time>
+            <a href="{{ page.permalink }}">{{ page.title }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+{% endblock content %}

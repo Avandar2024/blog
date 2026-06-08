@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% if section.content %}
+    <section class="intro prose">
+      {{ section.content | safe }}
+      <p><a href="{{ get_url(path="/about/") }}">阅读关于作者的更多内容</a></p>
+      <p class="find-me">Find me on <a href="https://github.com/Avandar2024">GitHub</a> and <a href="{{ get_url(path="atom.xml") }}">RSS</a>.</p>
+    </section>
+  {% endif %}
+
+  {% set posts_section = get_section(path="posts/_index.md") %}
+  <section class="writing">
+    <h2>Writing</h2>
+    {% if posts_section.pages | length > 0 %}
+      <ul class="post-list">
+        {% for page in posts_section.pages %}
+          <li>
+            <time datetime="{{ page.date | date(format="%Y-%m-%d") }}">{{ page.date | date(format="%Y-%m-%d") }}</time>
+            <a href="{{ page.permalink }}">{{ page.title }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-state">No posts yet.</p>
+    {% endif %}
+  </section>
+{% endblock content %}
