@@ -70,21 +70,52 @@
 
     <main id="main-content" class="content" tabindex="-1">
       
-  <article class="article prose">
-    <header class="article-header">
-      
-        <p class="article-date">2026-06-08</p>
-      
-      <h1>BFGS及其不跳步推导</h1>
-      
-      
-        <p class="article-date">12 min read</p>
-      
-    </header>
-    <h1 id="bfgs-ji-qi-bu-tiao-bu-tui-dao">BFGS 及其不跳步推导</h1>
+  <div class="article-layout">
+    
+      <nav class="article-toc" aria-label="文章导航">
+        <p>目录</p>
+        <ol>
+          
+            
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#cong-niu-dun-fa-kai-shi">从牛顿法开始</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#ni-niu-dun-tiao-jian">拟牛顿条件</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#jia-she-he-you-hua-wen-ti-ding-yi">假设和优化问题定义</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#ni-xing-shi-de-bfgs-geng-xin">逆形式的 BFGS 更新</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#yan-zheng-dui-cheng-xing-bao-chi">验证对称性保持</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#yan-zheng-zheng-ding-xing-bao-chi">验证正定性保持</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#suan-fa-liu-cheng">算法流程</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#xiao-jie">小结</a></li>
+              
+                <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#fu-lu-a-frobenius-fan-shu-ping-fang-de-wei-fen">附录 A：Frobenius 范数平方的微分</a></li>
+              
+            
+          
+        </ol>
+      </nav>
+    
+    <article class="article prose">
+      <header class="article-header">
+        
+          <p class="article-date">2026-06-09</p>
+        
+        <h1>BFGS及其不跳步推导</h1>
+        
+        
+          <p class="article-date">15 min read</p>
+        
+      </header>
+      <h1 id="bfgs-ji-qi-bu-tiao-bu-tui-dao">BFGS 及其不跳步推导</h1>
 <p>BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian
-矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、正定性和逆
-Hessian 更新几个角度，把 BFGS 的公式一步一步推出。</p>
+矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、逆
+Hessian 更新和正定性几个角度，把 BFGS 的公式一步一步推出。</p>
 <h2 id="cong-niu-dun-fa-kai-shi">从牛顿法开始</h2>
 <p>考虑无约束优化问题</p>
 <p>$$\min\limits_{x}f(x)$$</p>
@@ -132,136 +163,188 @@ $B_{k}$ 近似 $G_{k}$，或用 $H_{k}$ 近似 $G_{k}^{- 1}$。</p>
 <p>两边左乘 $B_{k + 1}^{- 1}$：</p>
 <p>$$B_{k + 1}^{- 1}B_{k + 1}s_{k} = B_{k + 1}^{- 1}y_{k}$$</p>
 <p>左边化简为 $s_{k}$，右边记为 $H_{k + 1}y_{k}$，得到</p>
-<p>$$H_{k + 1}y_{k} = s_{k}$$</p>
+<p><span id="condition"></span>$$H_{k + 1}y_{k} = s_{k} \tag{condition}$$</p>
 <p>这就是逆形式的拟牛顿条件。</p>
-<h2 id="hessian-xing-shi-de-bfgs-geng-xin">Hessian 形式的 BFGS 更新</h2>
-<p>BFGS 对 Hessian 近似的更新为</p>
-<p>$$B_{k + 1} = B_{k} - \frac{B_{k}s_{k}s_{k}^{T}B_{k}}{s_{k}^{T}B_{k}s_{k}} + \frac{y_{k}y_{k}^{T}}{y_{k}^{T}s_{k}}$$</p>
-<p>下面验证它满足拟牛顿条件。为了减少下标，记</p>
-<p>$$s = s_{k},\quad y = y_{k},\quad B = B_{k}$$</p>
-<p>并写</p>
-<p>$$B^{+} = B - \frac{Bss^{T}B}{s^{T}Bs} + \frac{yy^{T}}{y^{T}s}$$</p>
-<p>计算 $B^{+}s$：</p>
-<p>$$B^{+}s = \left( B - \frac{Bss^{T}B}{s^{T}Bs} + \frac{yy^{T}}{y^{T}s} \right)s$$</p>
-<p>把乘法分配到三项：</p>
-<p>$$B^{+}s = Bs - \frac{\left( Bss^{T}B \right)s}{s^{T}Bs} + \frac{\left( yy^{T} \right)s}{y^{T}s}$$</p>
-<p>第二项中，矩阵乘法从右向左看：</p>
-<p>$$\left( Bss^{T}B \right)s = Bss^{T}Bs$$</p>
-<p>其中 $s^{T}Bs$ 是一个标量，因此</p>
-<p>$$Bss^{T}Bs = Bs\left( s^{T}Bs \right)$$</p>
-<p>所以</p>
-<p>$$\frac{\left( Bss^{T}B \right)s}{s^{T}Bs} = \frac{Bs\left( s^{T}Bs \right)}{s^{T}Bs} = Bs$$</p>
-<p>第三项同理：</p>
-<p>$$\left( yy^{T} \right)s = y\left( y^{T}s \right)$$</p>
-<p>于是</p>
-<p>$$\frac{\left( yy^{T} \right)s}{y^{T}s} = \frac{y\left( y^{T}s \right)}{y^{T}s} = y$$</p>
-<p>代回原式：</p>
-<p>$$B^{+}s = Bs - Bs + y$$</p>
-<p>前两项抵消：</p>
-<p>$$B^{+}s = y$$</p>
-<p>因此 BFGS 更新满足 $B_{k + 1}s_{k} = y_{k}$。</p>
-<h2 id="wei-shen-me-geng-xin-bao-chi-dui-cheng">为什么更新保持对称</h2>
-<p>假设 $B$ 对称，即 $B^{T} = B$。第一项 $B$ 对称。第二项的分子为
-$Bss^{T}B$，它的转置是</p>
-<p>$$\left( Bss^{T}B \right)^{T} = B^{T}\left( s^{T} \right)^{T}s^{T}B^{T}$$</p>
-<p>因为 $\left( s^{T} \right)^{T} = s$ 且 $B^{T} = B$，所以</p>
-<p>$$\left( Bss^{T}B \right)^{T} = Bss^{T}B$$</p>
-<p>分母 $s^{T}Bs$ 是标量，转置后不变，因此第二项对称。第三项满足</p>
-<p>$$\left( yy^{T} \right)^{T} = yy^{T}$$</p>
-<p>所以 $B^{+}$ 仍然对称。</p>
-<h2 id="zheng-ding-xing-de-wan-zheng-zheng-ming">正定性的完整证明</h2>
-<p>设 $B$ 正定，且曲率条件成立：</p>
+<h2 id="jia-she-he-you-hua-wen-ti-ding-yi">假设和优化问题定义</h2>
+<p>显然，仅 <a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/#condition">(condition)</a> 是无法确定 $H_{k + 1}$
+的。我们需要添加其他的假设来解出唯一的 $H_{k + 1}$。</p>
+<p>为了减少下标，记</p>
+<p>$$s = s_{k},\quad y = y_{k},\quad H = H_{k},\quad H^{+} = H_{k + 1}$$</p>
+<ul>
+<li>对称假设：</li>
+</ul>
+<p>$$H^{+} = \left( H^{+} \right)^{T}$$</p>
+<ul>
+<li>为了让更新保持正定，需要曲率条件：</li>
+</ul>
 <p>$$y^{T}s &gt; 0$$</p>
-<p>任取非零向量 $z$，计算二次型：</p>
-<p>$$z^{T}B^{+}z = z^{T}\left( B - \frac{Bss^{T}B}{s^{T}Bs} + \frac{yy^{T}}{y^{T}s} \right)z$$</p>
-<p>分配乘法：</p>
-<p>$$z^{T}B^{+}z = z^{T}Bz - z^{T}\frac{Bss^{T}B}{s^{T}Bs}z + z^{T}\frac{yy^{T}}{y^{T}s}z$$</p>
-<p>把标量分母提出：</p>
-<p>$$z^{T}B^{+}z = z^{T}Bz - \frac{z^{T}Bss^{T}Bz}{s^{T}Bs} + \frac{z^{T}yy^{T}z}{y^{T}s}$$</p>
-<p>第二项分子中，$z^{T}Bs$ 是标量，$s^{T}Bz$ 也是标量。因为 $B$ 对称，</p>
-<p>$$s^{T}Bz = \left( z^{T}Bs \right)^{T} = z^{T}Bs$$</p>
-<p>所以</p>
-<p>$$z^{T}Bss^{T}Bz = \left( z^{T}Bs \right)\left( s^{T}Bz \right) = \left( z^{T}Bs \right)^{2}$$</p>
-<p>第三项分子为</p>
-<p>$$z^{T}yy^{T}z = \left( y^{T}z \right)^{2}$$</p>
-<p>于是</p>
-<p>$$z^{T}B^{+}z = z^{T}Bz - \frac{\left( z^{T}Bs \right)^{2}}{s^{T}Bs} + \frac{\left( y^{T}z \right)^{2}}{y^{T}s}$$</p>
-<p>因为 $B$ 正定，可以定义内积</p>
-<p>$$\langle z,s\rangle_{B} = z^{T}Bs$$</p>
-<p>Cauchy-Schwarz 不等式给出</p>
-<p>$$\left( z^{T}Bs \right)^{2} \leq \left( z^{T}Bz \right)\left( s^{T}Bs \right)$$</p>
-<p>由于 $s^{T}Bs &gt; 0$，两边除以它：</p>
-<p>$$\frac{\left( z^{T}Bs \right)^{2}}{s^{T}Bs} \leq z^{T}Bz$$</p>
-<p>因此</p>
-<p>$$z^{T}Bz - \frac{\left( z^{T}Bs \right)^{2}}{s^{T}Bs} \geq 0$$</p>
-<p>又因为 $y^{T}s &gt; 0$，</p>
-<p>$$\frac{\left( y^{T}z \right)^{2}}{y^{T}s} \geq 0$$</p>
-<p>所以</p>
-<p>$$z^{T}B^{+}z \geq 0$$</p>
-<p>还要证明严格大于零。若
-$z^{T}B^{+}z = 0$，上面两个非负项必须同时为零。第一部分为零意味着
-Cauchy-Schwarz 取等号，所以 $z$ 与 $s$ 线性相关，存在标量 $\alpha$ 使</p>
-<p>$$z = \alpha s$$</p>
-<p>第二部分为零意味着</p>
-<p>$$y^{T}z = 0$$</p>
-<p>代入 $z = \alpha s$：</p>
-<p>$$y^{T}(\alpha s) = 0$$</p>
-<p>把标量提出：</p>
-<p>$$\alpha y^{T}s = 0$$</p>
-<p>由于 $y^{T}s &gt; 0$，只能有</p>
-<p>$$\alpha = 0$$</p>
-<p>于是</p>
-<p>$$z = 0$$</p>
-<p>这和我们任取非零 $z$ 矛盾。因此对所有非零 $z$，</p>
-<p>$$z^{T}B^{+}z &gt; 0$$</p>
-<p>所以 $B^{+}$ 正定。</p>
-<h2 id="ni-hessian-xing-shi">逆 Hessian 形式</h2>
-<p>实际计算方向时，更常用 $H_{k} \approx B_{k}^{- 1}$，因为可以直接写</p>
-<p>$$p_{k} = - H_{k}g_{k}$$</p>
-<p>BFGS 的逆更新为</p>
-<p>$$H_{k + 1} = \left( I - \rho s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho y_{k}s_{k}^{T} \right) + \rho s_{k}s_{k}^{T}$$</p>
-<p>其中</p>
-<p>$$\rho = \frac{1}{y_{k}^{T}s_{k}}$$</p>
-<p>仍省略下标，定义</p>
-<p>$$H^{+} = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right) + \rho ss^{T}$$</p>
-<p>验证它满足逆拟牛顿条件 $H^{+}y = s$。先代入 $y$：</p>
-<p>$$H^{+}y = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right)y + \rho ss^{T}y$$</p>
-<p>先算最右边括号：</p>
-<p>$$\left( I - \rho ys^{T} \right)y = y - \rho ys^{T}y$$</p>
-<p>因为 $s^{T}y = y^{T}s$，且 $\rho = \frac{1}{y^{T}s}$，所以</p>
-<p>$$\rho s^{T}y = 1$$</p>
-<p>于是</p>
-<p>$$y - \rho ys^{T}y = y - y = 0$$</p>
-<p>第一大项变成</p>
-<p>$$\left( I - \rho sy^{T} \right)H0 = 0$$</p>
-<p>再算第二项：</p>
-<p>$$\rho ss^{T}y = \rho s\left( s^{T}y \right)$$</p>
-<p>代入 $\rho = \frac{1}{y^{T}s}$：</p>
-<p>$$\rho s\left( s^{T}y \right) = \left( \frac{1}{y^{T}s} \right)s\left( y^{T}s \right) = s$$</p>
-<p>因此</p>
+<ul>
+<li>$H$和$H^{+}$之间满足最小改变原则，因此用一个加权 Frobenius 范数衡量
+$H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：</li>
+</ul>
+<p>$$W = W^{T},\quad W &gt; 0$$</p>
+<p>并且让 $W$ 在割线方向上把 $s$ 映到 $y$：</p>
+<p>$$Ws = y$$</p>
+<p>只要 $y^{T}s &gt; 0$，这样的对称正定 $W$ 可以构造出来。</p>
+<p>这样我们就可以得到如下的优化问题：</p>
+<p>$$\begin{array}{r}
+\min\limits_{H^{+}}\quad\frac{1}{2}\left| {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right|_{F}^{2}\quad \\[0.65em]
+\text{s.t. }\quad H^{+} = \left( H^{+} \right)^{T},\quad H^{+}y = s
+\end{array}$$</p>
+<p>其中 $W$ 满足</p>
+<p>$$W = W^{T},\quad W &gt; 0,\quad Ws = y$$</p>
+<h2 id="ni-xing-shi-de-bfgs-geng-xin">逆形式的 BFGS 更新</h2>
+<p>逆形式的拟牛顿条件是</p>
 <p>$$H^{+}y = s$$</p>
-<p>逆拟牛顿条件成立。</p>
-<h2 id="ni-xing-shi-de-zhan-kai">逆形式的展开</h2>
-<p>从紧凑形式开始：</p>
-<p>$$H^{+} = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right) + \rho ss^{T}$$</p>
-<p>先展开右乘：</p>
-<p>$$H\left( I - \rho ys^{T} \right) = H - \rho Hys^{T}$$</p>
-<p>再左乘：</p>
-<p>$$\left( I - \rho sy^{T} \right)\left( H - \rho Hys^{T} \right)$$</p>
-<p>分成两部分：</p>
-<p>$$= I\left( H - \rho Hys^{T} \right) - \rho sy^{T}\left( H - \rho Hys^{T} \right)$$</p>
-<p>继续展开：</p>
-<p>$$= H - \rho Hys^{T} - \rho sy^{T}H + \rho^{2}sy^{T}Hys^{T}$$</p>
-<p>加上最后一项：</p>
-<p>$$H^{+} = H - \rho Hys^{T} - \rho sy^{T}H + \rho^{2}sy^{T}Hys^{T} + \rho ss^{T}$$</p>
-<p>其中 $y^{T}Hy$ 是标量，所以</p>
-<p>$$\rho^{2}sy^{T}Hys^{T} = \rho^{2}\left( y^{T}Hy \right)ss^{T}$$</p>
-<p>合并两个 $ss^{T}$ 项：</p>
-<p>$$H^{+} = H - \rho Hys^{T} - \rho sy^{T}H + \left( \rho + \rho^{2}y^{T}Hy \right)ss^{T}$$</p>
-<p>提取 $\rho$：</p>
-<p>$$\rho + \rho^{2}y^{T}Hy = \rho(1 + \rho y^{T}Hy)$$</p>
-<p>因此展开形式为</p>
+<p>假设旧矩阵 $H$ 对称正定。接下来直接求解上一节给出的约束优化问题。</p>
+<p>令</p>
+<p>$$A = W^{\frac{1}{2}}H^{+}W^{\frac{1}{2}},\quad M = W^{\frac{1}{2}}HW^{\frac{1}{2}},\quad u = W^{- \frac{1}{2}}y$$</p>
+<p>由 $Ws = y$ 可得</p>
+<p>$$u = W^{- \frac{1}{2}}y = W^{\frac{1}{2}}s$$</p>
+<p>因为</p>
+<p>$$H^{+} = W^{- \frac{1}{2}}AW^{- \frac{1}{2}}$$</p>
+<p>所以目标函数变为</p>
+<p>$$\frac{1}{2}\left| {A - M} \right|_{F}^{2}$$</p>
+<p>约束 $H^{+}y = s$ 变为</p>
+<p>$$W^{- \frac{1}{2}}AW^{- \frac{1}{2}}y = s$$</p>
+<p>两边左乘 $W^{\frac{1}{2}}$：</p>
+<p>$$AW^{- \frac{1}{2}}y = W^{\frac{1}{2}}s$$</p>
+<p>用 $u = W^{- \frac{1}{2}}y = W^{\frac{1}{2}}s$ 化简：</p>
+<p>$$Au = u$$</p>
+<p>于是原问题等价地化为</p>
+<p>$$\begin{array}{r}
+\min\limits_{A}\quad\frac{1}{2}\left| {A - M} \right|_{F}^{2}\quad \\[0.65em]
+\text{s.t. }\quad A = A^{T},\quad Au = u
+\end{array}$$</p>
+<p>写拉格朗日函数。由于 $A$ 要求对称，变化量 $dA$ 也只在对称矩阵中取：</p>
+<p>$$L(A,\lambda) = \frac{1}{2}\operatorname{tr}((A - M)^{2}) - 2\lambda^{T(Au - u)}$$</p>
+<p>由 Frobenius 范数平方的微分公式，见附录 A，对 $A$ 求一阶变分：</p>
+<p>$$dL = \operatorname{tr}((A - M)dA) - 2\lambda^{T}dAu$$</p>
+<p>把第二项写成迹：</p>
+<p>$$\lambda^{T}dAu = \operatorname{tr}(\lambda^{T}dAu) = \operatorname{tr}(u\lambda^{T}dA)$$</p>
+<p>所以</p>
+<p>$$dL = \operatorname{tr}(\left( A - M - 2u\lambda^{T} \right)dA)$$</p>
+<p>但 $dA$ 是对称的。只有矩阵的对称部分会影响这个内积，因此驻点条件是</p>
+<p>$$A - M - \left( u\lambda^{T} + \lambda u^{T} \right) = 0$$</p>
+<p>也就是</p>
+<p>$$A = M + u\lambda^{T} + \lambda u^{T}$$</p>
+<p>把约束 $Au = u$ 代入：</p>
+<p>$$\left( M + u\lambda^{T} + \lambda u^{T} \right)u = u$$</p>
+<p>展开：</p>
+<p>$$Mu + u\left( \lambda^{T}u \right) + \lambda(u^{T}u) = u$$</p>
+<p>记</p>
+<p>$$\gamma = u^{T}u,\quad\delta = \lambda^{T}u,\quad\eta = u^{T}Mu$$</p>
+<p>则</p>
+<p>$$Mu + \delta u + \gamma\lambda = u$$</p>
+<p>移项得到</p>
+<p>$$\gamma\lambda = (1 - \delta)u - Mu$$</p>
+<p>两边左乘 $u^{T}$：</p>
+<p>$$\gamma u^{T}\lambda = (1 - \delta)u^{T}u - u^{T}Mu$$</p>
+<p>代入 $u^{T}\lambda = \delta$、$u^{T}u = \gamma$ 和 $u^{T}Mu = \eta$：</p>
+<p>$$\gamma\delta = (1 - \delta)\gamma - \eta$$</p>
+<p>展开右边：</p>
+<p>$$\gamma\delta = \gamma - \gamma\delta - \eta$$</p>
+<p>两边同时加上 $\gamma\delta$：</p>
+<p>$$2\gamma\delta = \gamma - \eta$$</p>
+<p>由于 $\gamma &gt; 0$，所以</p>
+<p>$$\delta = \frac{\gamma - \eta}{2\gamma}$$</p>
+<p>代回</p>
+<p>$$\gamma\lambda = (1 - \delta)u - Mu$$</p>
+<p>先计算 $1 - \delta$：</p>
+<p>$$1 - \delta = 1 - \frac{\gamma - \eta}{2\gamma}$$</p>
+<p>通分：</p>
+<p>$$1 - \delta = \frac{2\gamma - \gamma + \eta}{2\gamma} = \frac{\gamma + \eta}{2\gamma}$$</p>
+<p>因此</p>
+<p>$$\gamma\lambda = \left( \frac{\gamma + \eta}{2\gamma} \right)u - Mu$$</p>
+<p>两边除以 $\gamma$：</p>
+<p>$$\lambda = \left( \frac{\gamma + \eta}{2\gamma^{2}} \right)u - \frac{Mu}{\gamma}$$</p>
+<p>代回 $A = M + u\lambda^{T} + \lambda u^{T}$。先算 $u\lambda^{T}$：</p>
+<p>$$u\lambda^{T} = \left( \frac{\gamma + \eta}{2\gamma^{2}} \right)uu^{T} - \frac{uu^{T}M}{\gamma}$$</p>
+<p>再算 $\lambda u^{T}$：</p>
+<p>$$\lambda u^{T} = \left( \frac{\gamma + \eta}{2\gamma^{2}} \right)uu^{T} - \frac{Muu^{T}}{\gamma}$$</p>
+<p>两式相加：</p>
+<p>$$u\lambda^{T} + \lambda u^{T} = \left( \frac{\gamma + \eta}{\gamma^{2}} \right)uu^{T} - \frac{uu^{T}M + Muu^{T}}{\gamma}$$</p>
+<p>所以</p>
+<p>$$A = M - \frac{Muu^{T} + uu^{T}M}{\gamma} + \left( \frac{\gamma + \eta}{\gamma^{2}} \right)uu^{T}$$</p>
+<p>把最后一项写成更常用的形式：</p>
+<p>$$\frac{\gamma + \eta}{\gamma^{2}} = \frac{1 + \frac{\eta}{\gamma}}{\gamma}$$</p>
+<p>于是</p>
+<p>$$A = M - \frac{Muu^{T} + uu^{T}M}{u^{T}u} + \left( 1 + \frac{u^{T}Mu}{u^{T}u} \right)\frac{uu^{T}}{u^{T}u}$$</p>
+<p>现在回到 $H^{+}$：</p>
+<p>$$H^{+} = W^{- \frac{1}{2}}AW^{- \frac{1}{2}}$$</p>
+<p>由 $u = W^{- \frac{1}{2}}y = W^{\frac{1}{2}}s$ 可得</p>
+<p>$$W^{- \frac{1}{2}}u = s$$</p>
+<p>并且</p>
+<p>$$u^{T}u = s^{T}Ws = s^{T}y = y^{T}s$$</p>
+<p>还要化简 $Mu$：</p>
+<p>$$Mu = W^{\frac{1}{2}}HW^{\frac{1}{2}}W^{- \frac{1}{2}}y = W^{\frac{1}{2}}Hy$$</p>
+<p>所以</p>
+<p>$$W^{- \frac{1}{2}}Mu = Hy$$</p>
+<p>同理，</p>
+<p>$$u^{T}MW^{- \frac{1}{2}} = y^{T}H$$</p>
+<p>以及</p>
+<p>$$u^{T}Mu = y^{T}Hy$$</p>
+<p>代回展开式：</p>
+<p>$$H^{+} = H - \frac{Hys^{T} + sy^{T}H}{y^{T}s} + \left( 1 + \frac{y^{T}Hy}{y^{T}s} \right)\frac{ss^{T}}{y^{T}s}$$</p>
+<p>令</p>
+<p>$$\rho = \frac{1}{y^{T}s}$$</p>
+<p>则</p>
 <p>$$H^{+} = H - \rho Hys^{T} - \rho sy^{T}H + \rho(1 + \rho y^{T}Hy)ss^{T}$$</p>
+<p>这个展开式可以整理成更紧凑的乘积形式：</p>
+<p>$$H^{+} = \left( I - \rho sy^{T} \right)H\left( I - \rho ys^{T} \right) + \rho ss^{T}$$</p>
+<p>恢复下标：</p>
+<p>$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k\left( I - \rho_{k}y_{k}s_{k}^{T} \right)} + \rho_{k}s_{k}s_{k}^{T}$$</p>
+<p>其中</p>
+<p>$$\rho_{k} = \frac{1}{y_{k}^{T}s_{k}}$$</p>
+<p>这就是直接由逆形式约束优化问题推出的 BFGS 更新。</p>
+<h2 id="yan-zheng-dui-cheng-xing-bao-chi">验证对称性保持</h2>
+<p>记</p>
+<p>$$V = I - \rho ys^{T}$$</p>
+<p>则</p>
+<p>$$V^{T} = I - \rho sy^{T}$$</p>
+<p>逆形式更新可以写成</p>
+<p>$$H^{+} = V^{T}HV + \rho ss^{T}$$</p>
+<p>如果 $H$ 对称，则</p>
+<p>$$\left( V^{T}HV \right)^{T} = V^{T}H^{T}V = V^{T}HV$$</p>
+<p>而</p>
+<p>$$\left( ss^{T} \right)^{T} = ss^{T}$$</p>
+<p>所以 $H^{+}$ 仍然对称。</p>
+<h2 id="yan-zheng-zheng-ding-xing-bao-chi">验证正定性保持</h2>
+<p>设 $H$ 正定，且曲率条件成立：</p>
+<p>$$y^{T}s &gt; 0$$</p>
+<p>由于</p>
+<p>$$\rho = \frac{1}{y^{T}s}$$</p>
+<p>所以</p>
+<p>$$\rho &gt; 0$$</p>
+<p>任取非零向量 $z$，计算二次型：</p>
+<p>$$z^{T}H^{+}z = z^{T\left( V^{T}HV + \rho ss^{T} \right)}z$$</p>
+<p>分配乘法：</p>
+<p>$$z^{T}H^{+}z = z^{T}V^{T}HVz + \rho z^{T}ss^{T}z$$</p>
+<p>第一项可写成</p>
+<p>$$z^{T}V^{T}HVz = (Vz)^{T}H(Vz)$$</p>
+<p>第二项中，$z^{T}s$ 是标量，且 $s^{T}z = z^{T}s$，所以</p>
+<p>$$z^{T}ss^{T}z = \left( s^{T}z \right)^{2}$$</p>
+<p>于是</p>
+<p>$$z^{T}H^{+}z = (Vz)^{T}H(Vz) + {\rho(s^{T}z)}^{2}$$</p>
+<p>因为 $H$ 正定，第一项非负；因为 $\rho &gt; 0$，第二项也非负。因此</p>
+<p>$$z^{T}H^{+}z \geq 0$$</p>
+<p>还要证明严格大于零。若 $z^{T}H^{+}z = 0$，两个非负项必须同时为零：</p>
+<p>$$(Vz)^{T}H(Vz) = 0$$</p>
+<p>和</p>
+<p>$${\rho(s^{T}z)}^{2} = 0$$</p>
+<p>由 $H$ 正定可知第一式推出</p>
+<p>$$Vz = 0$$</p>
+<p>由 $\rho &gt; 0$ 可知第二式推出</p>
+<p>$$s^{T}z = 0$$</p>
+<p>把 $V = I - \rho ys^{T}$ 代入 $Vz = 0$：</p>
+<p>$$\left( I - \rho ys^{T} \right)z = 0$$</p>
+<p>展开：</p>
+<p>$$z - \rho y\left( s^{T}z \right) = 0$$</p>
+<p>由于 $s^{T}z = 0$，得到</p>
+<p>$$z = 0$$</p>
+<p>这和任取非零 $z$ 矛盾。因此对所有非零 $z$，</p>
+<p>$$z^{T}H^{+}z &gt; 0$$</p>
+<p>所以 $H^{+}$ 正定。</p>
 <h2 id="suan-fa-liu-cheng">算法流程</h2>
 <p>BFGS 的一次迭代如下：</p>
 <ol>
@@ -294,15 +377,40 @@ Cauchy-Schwarz 取等号，所以 $z$ 与 $s$ 线性相关，存在标量 $\alph
 </ol>
 <h2 id="xiao-jie">小结</h2>
 <p>BFGS
-的核心不是凭空构造一个公式，而是在满足拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。Hessian
-形式</p>
-<p>$$B_{k + 1} = B_{k} - \frac{B_{k}s_{k}s_{k}^{T}B_{k}}{s_{k}^{T}B_{k}s_{k}} + \frac{y_{k}y_{k}^{T}}{y_{k}^{T}s_{k}}$$</p>
-<p>说明它如何修正曲率；逆 Hessian 形式</p>
+的核心不是凭空构造一个公式，而是在满足逆拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。逆
+Hessian 更新</p>
 <p>$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$</p>
-<p>则直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} &gt; 0$，BFGS
+<p>可以直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} &gt; 0$，BFGS
 就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。</p>
+<h2 id="fu-lu-a-frobenius-fan-shu-ping-fang-de-wei-fen">附录 A：Frobenius 范数平方的微分</h2>
+<p>对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为</p>
+<p>$$\left| X \right|<em>{F} = \sqrt{\sum</em>{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$</p>
+<p>也可以写成迹的形式：</p>
+<p>$$\left| X \right|_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$</p>
+<p>因此</p>
+<p>$$\left| X \right|_{F}^{2} = \operatorname{tr}(X^{T}X)$$</p>
+<p>更一般地，若 $M$ 是与 $X$ 同型的常矩阵，则</p>
+<p>$$\varphi(X) = \frac{1}{2}\left| {X - M} \right|_{F}^{2}$$</p>
+<p>的微分为</p>
+<p>$$d\varphi = \operatorname{tr}((X - M)^{T}dX)$$</p>
+<p>如果 $X$ 和 $M$ 都是对称矩阵，并且只考虑对称方向上的变化
+$dX = dX^{T}$，则</p>
+<p>$$d\varphi = \operatorname{tr}((X - M)dX)$$</p>
+<p>证明如下。由 Frobenius 范数的迹表示，</p>
+<p>$$\varphi(X) = \frac{1}{2}\operatorname{tr}((X - M)^{T}(X - M))$$</p>
+<p>对两边取微分：</p>
+<p>$$d\varphi = \frac{1}{2}d\operatorname{tr}((X - M)^{T}(X - M))$$</p>
+<p>因为 $M$ 是常矩阵，所以 $d(X - M) = dX$，从而</p>
+<p>$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}(X - M) + (X - M)^{T}dX)$$</p>
+<p>利用迹的转置不变性：</p>
+<p>$$\operatorname{tr}(dX^{T}(X - M)) = \operatorname{tr}(\left( (X - M)^{T}dX \right)^{T}) = \operatorname{tr}((X - M)^{T}dX)$$</p>
+<p>所以两项相同，得到</p>
+<p>$$d\varphi = \operatorname{tr}((X - M)^{T}dX)$$</p>
+<p>若 $X$、$M$ 和 $dX$ 都对称，则 $(X - M)^{T} = X - M$，于是</p>
+<p>$$d\varphi = \operatorname{tr}((X - M)dX)$$</p>
 
-  </article>
+    </article>
+  </div>
 
     </main>
 
