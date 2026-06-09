@@ -19,10 +19,9 @@
 
 (defn json-escape
   [value]
-  (-> (string value)
-    (string/replace-all "\\" "\\\\")
-    (string/replace-all "\"" "\\\"")
-    (string/replace-all "\n" "\\n")))
+  (let [with-escaped-backslashes (string/replace-all "\\" "\\\\" (string value))
+        with-escaped-quotes (string/replace-all "\"" "\\\"" with-escaped-backslashes)]
+    (string/replace-all "\n" "\\n" with-escaped-quotes)))
 
 (defn json-string
   [value]
@@ -40,12 +39,18 @@
   [body key &opt start]
   (let [key-text (json-string key)
         key-pos (string/find key-text body (or start 0))]
-    (when (nil? key-pos)
-      nil)
-    (let [colon (string/find ":" body (+ key-pos (length key-text)))
-          first-quote (string/find "\"" body (+ colon 1))
-          second-quote (string/find "\"" body (+ first-quote 1))]
-      (string/slice body (+ first-quote 1) second-quote))))
+    (if (nil? key-pos)
+      nil
+      (let [colon (string/find ":" body (+ key-pos (length key-text)))]
+        (if (nil? colon)
+          nil
+          (let [first-quote (string/find "\"" body (+ colon 1))]
+            (if (nil? first-quote)
+              nil
+              (let [second-quote (string/find "\"" body (+ first-quote 1))]
+                (if second-quote
+                  (string/slice body (+ first-quote 1) second-quote)
+                  nil)))))))))
 
 (defn response-sha
   [body]
