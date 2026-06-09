@@ -2,8 +2,8 @@
 pkgs.mkShell {
   buildInputs = [
     pkgs.just
-    pkgs.nodejs
     pkgs.pandoc
+    pkgs.quickjs
     pkgs.rsync
     pkgs.zola
   ];

@@ -33,7 +33,7 @@ nix-shell --run 'just deploy-github-pages'
 
 This infers the correct GitHub Pages base URL, runs `zola build --base-url ...`, and pushes the generated files to `GITHUB_PAGES_BRANCH`, defaulting to `gh-pages`.
 
-## Automatic Deployment After Commit
+## Automatic Deployment On Push
 
 Install the repository-local hook once:
 
@@ -47,7 +47,9 @@ Enable automatic deployment in your shell:
 export GITHUB_AUTO_DEPLOY=1
 ```
 
-After each local `git commit`, `.githooks/post-commit` runs `just deploy-github-pages`.
+When `git push` runs, `.githooks/pre-push` runs `just deploy-github-pages`.
+
+Git does not provide a local `post-push` hook. The `pre-push` hook runs during `git push` before refs are sent to the remote.
 
 ## GitHub Pages Setting
 

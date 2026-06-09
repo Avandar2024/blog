@@ -5,5 +5,5 @@ if [ "${GITHUB_AUTO_DEPLOY:-0}" != "1" ]; then
   exit 0
 fi
 
-echo "post-commit: deploying GitHub Pages via GitHub API"
+echo "pre-push: deploying GitHub Pages via GitHub API"
 just deploy-github-pages

@@ -1,46 +1,57 @@
-#!/usr/bin/env node
+#!/usr/bin/env qjs
 
-const fs = require("node:fs");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import * as std from "std";
+import {
+  base64File,
+  base64String,
+  commandOutput,
+  commandRun,
+  isDirectory,
+  isOk,
+  joinPath,
+  readTextFile,
+  writeTempFile,
+} from "./shell.js";
 
-const root = process.cwd();
-const publicDir = path.join(root, "public");
-const owner = process.env.GITHUB_OWNER || "";
-const repo = process.env.GITHUB_REPO || "";
-const token = process.env.GITHUB_TOKEN || "";
-const branch = process.env.GITHUB_PAGES_BRANCH || "gh-pages";
-const apiUrl = (process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/$/, "");
-const cname = process.env.GITHUB_PAGES_CNAME || "";
+const root = commandOutput(["pwd"]).trim();
+const publicDir = joinPath(root, "public");
+const owner = std.getenv("GITHUB_OWNER") || "";
+const repo = std.getenv("GITHUB_REPO") || "";
+const token = std.getenv("GITHUB_TOKEN") || "";
+const branch = std.getenv("GITHUB_PAGES_BRANCH") || "gh-pages";
+const apiUrl = (std.getenv("GITHUB_API_URL") || "https://api.github.com").replace(/\/$/, "");
+const cname = std.getenv("GITHUB_PAGES_CNAME") || "";
 
-main().catch((error) => {
+try {
+  main();
+} catch (error) {
   console.error(error.message);
-  process.exit(1);
-});
+  std.exit(1);
+}
 
-async function main() {
+function main() {
   requireConfig();
 
-  if (!fs.existsSync(publicDir)) {
+  if (!isDirectory(publicDir)) {
     throw new Error("Missing public/. Run `just build-pages` before deploying.");
   }
 
   const files = collectFiles(publicDir);
-  files.push({ path: ".nojekyll", content: "" });
+  files.push({ path: ".nojekyll", contentBase64: "" });
 
   if (cname) {
-    files.push({ path: "CNAME", content: `${cname}\n` });
+    files.push({ path: "CNAME", contentBase64: base64String(`${cname}\n`) });
   }
 
-  const currentRef = await getBranchRef();
+  const currentRef = getBranchRef();
   const parentSha = currentRef?.object?.sha || null;
-  const treeSha = await createTree(files);
-  const commitSha = await createCommit(treeSha, parentSha);
+  const treeSha = createTree(files);
+  const commitSha = createCommit(treeSha, parentSha);
 
   if (currentRef) {
-    await updateRef(commitSha);
+    updateRef(commitSha);
   } else {
-    await createRef(commitSha);
+    createRef(commitSha);
   }
 
   console.log(`Deployed ${files.length} files to ${owner}/${repo}:${branch} at ${commitSha}.`);
@@ -48,47 +59,32 @@ async function main() {
 
 function requireConfig() {
   for (const name of ["GITHUB_OWNER", "GITHUB_REPO", "GITHUB_TOKEN"]) {
-    if (!process.env[name]) throw new Error(`Set ${name} before deploying.`);
+    if (!std.getenv(name)) throw new Error(`Set ${name} before deploying.`);
   }
 }
 
 function collectFiles(dir) {
-  const files = [];
-
-  walk(dir, (file) => {
-    const relativePath = path.relative(dir, file).split(path.sep).join("/");
-    files.push({
-      path: relativePath,
-      content: fs.readFileSync(file),
-    });
-  });
-
-  return files;
+  return commandOutput(["find", dir, "-type", "f", "-print"])
+    .split("\n")
+    .filter(Boolean)
+    .map((file) => ({
+      path: file.slice(dir.length + 1),
+      contentBase64: base64File(file),
+    }));
 }
 
-function walk(dir, visit) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      walk(fullPath, visit);
-    } else if (entry.isFile()) {
-      visit(fullPath);
-    }
-  }
-}
-
-async function getBranchRef() {
-  const response = await request(`/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(branch)}`);
+function getBranchRef() {
+  const response = request("GET", `/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(branch)}`);
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`Could not read ${branch} ref: HTTP ${response.status} ${await response.text()}`);
-  return response.json();
+  if (!isOk(response.status)) throw new Error(`Could not read ${branch} ref: HTTP ${response.status} ${response.body}`);
+  return JSON.parse(response.body);
 }
 
-async function createTree(files) {
+function createTree(files) {
   const tree = [];
 
   for (const file of files) {
-    const blob = await createBlob(file.content);
+    const blob = createBlob(file.contentBase64);
     tree.push({
       path: file.path,
       mode: "100644",
@@ -97,33 +93,30 @@ async function createTree(files) {
     });
   }
 
-  const response = await request(`/repos/${owner}/${repo}/git/trees`, {
-    method: "POST",
-    body: JSON.stringify({ tree }),
-  });
+  const response = request("POST", `/repos/${owner}/${repo}/git/trees`, JSON.stringify({ tree }));
 
-  if (!response.ok) throw new Error(`Could not create tree: HTTP ${response.status} ${await response.text()}`);
-  return (await response.json()).sha;
+  if (!isOk(response.status)) throw new Error(`Could not create tree: HTTP ${response.status} ${response.body}`);
+  return JSON.parse(response.body).sha;
 }
 
-async function createBlob(content) {
-  const buffer = Buffer.isBuffer(content) ? content : Buffer.from(String(content));
-  const response = await request(`/repos/${owner}/${repo}/git/blobs`, {
-    method: "POST",
-    body: JSON.stringify({
-      content: buffer.toString("base64"),
+function createBlob(contentBase64) {
+  const response = request(
+    "POST",
+    `/repos/${owner}/${repo}/git/blobs`,
+    JSON.stringify({
+      content: contentBase64,
       encoding: "base64",
     }),
-  });
+  );
 
-  if (!response.ok) throw new Error(`Could not create blob: HTTP ${response.status} ${await response.text()}`);
-  return response.json();
+  if (!isOk(response.status)) throw new Error(`Could not create blob: HTTP ${response.status} ${response.body}`);
+  return JSON.parse(response.body);
 }
 
-async function createCommit(treeSha, parentSha) {
+function createCommit(treeSha, parentSha) {
   const sourceCommit = currentCommitSha();
   const message =
-    process.env.GITHUB_PAGES_COMMIT_MESSAGE ||
+    std.getenv("GITHUB_PAGES_COMMIT_MESSAGE") ||
     `Deploy site${sourceCommit ? ` from ${sourceCommit.slice(0, 12)}` : ""}`;
   const body = { message, tree: treeSha };
 
@@ -131,61 +124,80 @@ async function createCommit(treeSha, parentSha) {
     body.parents = [parentSha];
   }
 
-  const response = await request(`/repos/${owner}/${repo}/git/commits`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  const response = request("POST", `/repos/${owner}/${repo}/git/commits`, JSON.stringify(body));
 
-  if (!response.ok) throw new Error(`Could not create commit: HTTP ${response.status} ${await response.text()}`);
-  return (await response.json()).sha;
+  if (!isOk(response.status)) throw new Error(`Could not create commit: HTTP ${response.status} ${response.body}`);
+  return JSON.parse(response.body).sha;
 }
 
-async function createRef(commitSha) {
-  const response = await request(`/repos/${owner}/${repo}/git/refs`, {
-    method: "POST",
-    body: JSON.stringify({
+function createRef(commitSha) {
+  const response = request(
+    "POST",
+    `/repos/${owner}/${repo}/git/refs`,
+    JSON.stringify({
       ref: `refs/heads/${branch}`,
       sha: commitSha,
     }),
-  });
+  );
 
-  if (!response.ok) throw new Error(`Could not create ${branch} ref: HTTP ${response.status} ${await response.text()}`);
+  if (!isOk(response.status)) throw new Error(`Could not create ${branch} ref: HTTP ${response.status} ${response.body}`);
 }
 
-async function updateRef(commitSha) {
-  const response = await request(`/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
-    method: "PATCH",
-    body: JSON.stringify({
+function updateRef(commitSha) {
+  const response = request(
+    "PATCH",
+    `/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branch)}`,
+    JSON.stringify({
       sha: commitSha,
       force: true,
     }),
-  });
+  );
 
-  if (!response.ok) throw new Error(`Could not update ${branch} ref: HTTP ${response.status} ${await response.text()}`);
+  if (!isOk(response.status)) throw new Error(`Could not update ${branch} ref: HTTP ${response.status} ${response.body}`);
 }
 
 function currentCommitSha() {
-  const result = spawnSync("git", ["rev-parse", "HEAD"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  });
-
-  if (result.status !== 0) return "";
-  return result.stdout.trim();
+  try {
+    return commandOutput(["git", "rev-parse", "HEAD"]).trim();
+  } catch {
+    return "";
+  }
 }
 
-async function request(resource, options = {}) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${token}`,
-    "X-GitHub-Api-Version": "2022-11-28",
-    ...(options.headers || {}),
-  };
+function request(method, resource, body = "") {
+  const outputFile = commandOutput(["mktemp"]).trim();
+  const args = [
+    "curl",
+    "--silent",
+    "--show-error",
+    "--output",
+    outputFile,
+    "--write-out",
+    "%{http_code}",
+    "--request",
+    method,
+    "--header",
+    "Accept: application/vnd.github+json",
+    "--header",
+    `Authorization: Bearer ${token}`,
+    "--header",
+    "X-GitHub-Api-Version: 2022-11-28",
+  ];
+  let bodyFile = "";
 
-  if (options.body) headers["Content-Type"] = "application/json";
+  if (body) {
+    bodyFile = writeTempFile(body);
+    args.push("--header", "Content-Type: application/json", "--data-binary", `@${bodyFile}`);
+  }
 
-  return fetch(`${apiUrl}${resource}`, {
-    ...options,
-    headers,
-  });
+  args.push(`${apiUrl}${resource}`);
+
+  try {
+    const status = Number(commandOutput(args).trim());
+    const responseBody = readTextFile(outputFile);
+    return { status, body: responseBody };
+  } finally {
+    commandRun(["rm", "-f", outputFile]);
+    if (bodyFile) commandRun(["rm", "-f", bodyFile]);
+  }
 }

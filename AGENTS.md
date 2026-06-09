@@ -19,7 +19,7 @@ This repository is a Zola static blog. Site configuration lives in `zola.toml`. 
 
 ## Coding Style & Naming Conventions
 
-Use TOML front matter delimited by `+++` for content files. Prefer source-first edits in `typ_content/posts/`; generated Markdown in `content/posts/` should come from `just convert` unless the post has no Typst source. JavaScript uses CommonJS, two-space indentation, double quotes, semicolons, and Node built-in module imports with the `node:` prefix. Templates use Zola/Tera syntax and should keep presentation logic minimal. Keep Sass centralized in `sass/main.scss` unless the stylesheet is intentionally split later.
+Use TOML front matter delimited by `+++` for content files. Prefer source-first edits in `typ_content/posts/`; generated Markdown in `content/posts/` should come from `just convert` unless the post has no Typst source. JavaScript uses QuickJS modules, two-space indentation, double quotes, and semicolons. Templates use Zola/Tera syntax and should keep presentation logic minimal. Keep Sass centralized in `sass/main.scss` unless the stylesheet is intentionally split later.
 
 ## Testing Guidelines
 

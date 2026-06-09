@@ -1,12 +1,14 @@
-#!/usr/bin/env node
+#!/usr/bin/env qjs
 
-const owner = process.env.GITHUB_OWNER || "";
-const repo = process.env.GITHUB_REPO || "";
-const explicitBaseUrl = process.env.GITHUB_PAGES_BASE_URL || "";
+import * as std from "std";
+
+const owner = std.getenv("GITHUB_OWNER") || "";
+const repo = std.getenv("GITHUB_REPO") || "";
+const explicitBaseUrl = std.getenv("GITHUB_PAGES_BASE_URL") || "";
 
 if (explicitBaseUrl) {
   console.log(stripTrailingSlash(explicitBaseUrl));
-  process.exit(0);
+  std.exit(0);
 }
 
 if (!owner) {
@@ -29,5 +31,5 @@ function stripTrailingSlash(value) {
 
 function fail(message) {
   console.error(message);
-  process.exit(1);
+  std.exit(1);
 }
