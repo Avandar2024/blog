@@ -32,11 +32,11 @@ build: convert
 
 # Build for GitHub Pages. Defaults to https://GITHUB_OWNER.github.io/GITHUB_REPO.
 build-pages: convert
-    @zola build --base-url "$(qjs --module ./scripts/github-pages-base-url.js)"
+    @zola build --base-url "$(janet ./scripts/github-pages-base-url.janet)"
 
 # Build and deploy public/ to the GitHub Pages branch through the GitHub API.
 deploy-github-pages: build-pages
-    @qjs --module ./scripts/deploy-github-pages.js
+    @janet ./scripts/deploy-github-pages.janet
 
 # Install repository-local Git hooks from .githooks/.
 install-hooks:
@@ -67,4 +67,4 @@ new-post title:
 
 [private]
 _convert-file file:
-    @qjs --module ./scripts/convert-file.js "{{file}}" "{{out_ext}}" "{{today}}" "{{src_dir}}" "{{out_dir}}"
+    @janet ./scripts/convert-file.janet "{{file}}" "{{out_ext}}" "{{today}}" "{{src_dir}}" "{{out_dir}}"

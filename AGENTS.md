@@ -6,7 +6,7 @@ This repository is a Zola static blog. Site configuration lives in `zola.toml`. 
 
 ## Build, Test, and Development Commands
 
-- `nix-shell`: enter the development shell with Node.js, Just, Pandoc, rsync, and Zola.
+- `nix-shell`: enter the development shell with Janet, Just, Pandoc, rsync, and Zola.
 - `just`: list available tasks.
 - `just convert`: convert non-empty `typ_content/**/*.typ` sources to Markdown and sync generated files into `content/`.
 - `just check`: convert content and run `zola check`.
@@ -15,11 +15,11 @@ This repository is a Zola static blog. Site configuration lives in `zola.toml`. 
 - `just build-pages`: build for GitHub Pages using `GITHUB_OWNER` and `GITHUB_REPO`; `GITHUB_PAGES_BASE_URL` is only an override.
 - `just deploy-github-pages`: build and deploy `public/` through the GitHub API.
 
-`just convert` invokes Pandoc through `scripts/convert-file.js`. Do not rely on generated temporary Markdown inside `typ_content/`; the recipes clean it.
+`just convert` invokes Pandoc through `scripts/convert-file.janet`. Do not rely on generated temporary Markdown inside `typ_content/`; the recipes clean it.
 
 ## Coding Style & Naming Conventions
 
-Use TOML front matter delimited by `+++` for content files. Prefer source-first edits in `typ_content/posts/`; generated Markdown in `content/posts/` should come from `just convert` unless the post has no Typst source. JavaScript uses QuickJS modules, two-space indentation, double quotes, and semicolons. Templates use Zola/Tera syntax and should keep presentation logic minimal. Keep Sass centralized in `sass/main.scss` unless the stylesheet is intentionally split later.
+Use TOML front matter delimited by `+++` for content files. Prefer source-first edits in `typ_content/posts/`; generated Markdown in `content/posts/` should come from `just convert` unless the post has no Typst source. Janet scripts use two-space indentation and small helper functions in `scripts/shell.janet`. Templates use Zola/Tera syntax and should keep presentation logic minimal. Keep Sass centralized in `sass/main.scss` unless the stylesheet is intentionally split later.
 
 ## Testing Guidelines
 

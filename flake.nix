@@ -23,9 +23,9 @@
     devShells = forAllSystems (pkgs: {
       default = pkgs.mkShell {
         packages = with pkgs; [
+          janet
           just
           pandoc
-          quickjs
           rsync
           zola
         ];

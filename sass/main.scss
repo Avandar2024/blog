@@ -213,6 +213,32 @@ a:hover {
   color: var(--muted);
 }
 
+.fold-block {
+  margin: 0 0 16px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.fold-block summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  color: var(--heading);
+  font-weight: 560;
+}
+
+.fold-block summary:hover {
+  background: rgba(127, 183, 198, 0.08);
+}
+
+.fold-content {
+  padding: 0 14px 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.fold-content > :last-child {
+  margin-bottom: 0;
+}
+
 .find-me {
   color: var(--muted);
 }
