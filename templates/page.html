@@ -1,19 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <article class="article prose">
-    <header class="article-header">
-      {% if page.date %}
-        <p class="article-date">{{ page.date | date(format="%Y-%m-%d") }}</p>
-      {% endif %}
-      <h1>{{ page.title }}</h1>
-      {% if page.description %}
-        <p>{{ page.description }}</p>
-      {% endif %}
-      {% if config.extra.show_reading_time and page.reading_time %}
-        <p class="article-date">{{ page.reading_time }} min read</p>
-      {% endif %}
-    </header>
-    {{ page.content | safe }}
-  </article>
+  <div class="article-layout">
+    {% if page.toc and page.toc | length > 0 %}
+      <nav class="article-toc" aria-label="文章导航">
+        <p>目录</p>
+        <ol>
+          {% for heading in page.toc %}
+            {% if heading.children and heading.children | length > 0 %}
+              {% for child in heading.children %}
+                <li><a href="{{ child.permalink | safe }}">{{ child.title }}</a></li>
+              {% endfor %}
+            {% else %}
+              <li><a href="{{ heading.permalink | safe }}">{{ heading.title }}</a></li>
+            {% endif %}
+          {% endfor %}
+        </ol>
+      </nav>
+    {% endif %}
+    <article class="article prose">
+      <header class="article-header">
+        {% if page.date %}
+          <p class="article-date">{{ page.date | date(format="%Y-%m-%d") }}</p>
+        {% endif %}
+        <h1>{{ page.title }}</h1>
+        {% if page.description %}
+          <p>{{ page.description }}</p>
+        {% endif %}
+        {% if config.extra.show_reading_time and page.reading_time %}
+          <p class="article-date">{{ page.reading_time }} min read</p>
+        {% endif %}
+      </header>
+      {{ page.content | safe }}
+    </article>
+  </div>
 {% endblock content %}

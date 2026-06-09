@@ -97,13 +97,13 @@ $$B_{k + 1}^{- 1}B_{k + 1}s_{k} = B_{k + 1}^{- 1}y_{k}$$
 
 左边化简为 $s_{k}$，右边记为 $H_{k + 1}y_{k}$，得到
 
-$$H_{k + 1}y_{k} = s_{k}$$ []{#condition}
+<span id="condition"></span>$$H_{k + 1}y_{k} = s_{k} \tag{condition}$$
 
 这就是逆形式的拟牛顿条件。
 
 ## 假设和优化问题定义
 
-显然，仅 [\[condition\]](#condition){.ref} 是无法确定 $H_{k + 1}$
+显然，仅 [(condition)](#condition) 是无法确定 $H_{k + 1}$
 的。我们需要添加其他的假设来解出唯一的 $H_{k + 1}$。
 
 为了减少下标，记
@@ -132,7 +132,7 @@ $$Ws = y$$
 这样我们就可以得到如下的优化问题：
 
 $$\begin{array}{r}
-\min\limits_{H^{+}}\quad\frac{1}{2}\left\| {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right\|_{F}^{2}\quad \\
+\min\limits_{H^{+}}\quad\frac{1}{2}\left\| {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right\|_{F}^{2}\quad \\\\[0.65em]
 \text{s.t. }\quad H^{+} = \left( H^{+} \right)^{T},\quad H^{+}y = s
 \end{array}$$
 
@@ -179,7 +179,7 @@ $$Au = u$$
 于是原问题等价地化为
 
 $$\begin{array}{r}
-\min\limits_{A}\quad\frac{1}{2}\left\| {A - M} \right\|_{F}^{2}\quad \\
+\min\limits_{A}\quad\frac{1}{2}\left\| {A - M} \right\|_{F}^{2}\quad \\\\[0.65em]
 \text{s.t. }\quad A = A^{T},\quad Au = u
 \end{array}$$
 

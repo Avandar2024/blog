@@ -17,6 +17,7 @@ convert: clean-typ-md
 
 # Convert one Typst source, for example:
 # just convert-one typ_content/posts/BFGS及其不跳步推导.typ
+# just convert-one typ_content/posts/my-modular-post
 convert-one file: clean-typ-md
     @just _convert-file "{{file}}"
     @just clean-typ-md
