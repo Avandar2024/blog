@@ -1,6 +1,8 @@
+#set math.equation(numbering: "1.")
+
 = BFGS 及其不跳步推导
 
-BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian 矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、正定性和逆 Hessian 更新几个角度，把 BFGS 的公式一步一步推出。
+BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian 矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、逆 Hessian 更新和正定性几个角度，把 BFGS 的公式一步一步推出。
 
 == 从牛顿法开始
 
@@ -84,259 +86,343 @@ $ B_(k+1)^(-1) B_(k+1) s_k = B_(k+1)^(-1) y_k $
 
 左边化简为 $s_k$，右边记为 $H_(k+1)y_k$，得到
 
-$ H_(k+1) y_k = s_k $
+$ H_(k+1) y_k = s_k $ <condition>
 
 这就是逆形式的拟牛顿条件。
 
-== Hessian 形式的 BFGS 更新
+== 假设和优化问题定义
 
-BFGS 对 Hessian 近似的更新为
+显然，仅 @condition 是无法确定 $H_(k+1)$ 的。我们需要添加其他的假设来解出唯一的 $H_(k+1)$。
 
-$ B_(k+1) = B_k - (B_k s_k s_k^T B_k)/(s_k^T B_k s_k) + (y_k y_k^T)/(y_k^T s_k) $
+为了减少下标，记
 
-下面验证它满足拟牛顿条件。为了减少下标，记
+$ s = s_k, quad y = y_k, quad H = H_k, quad H^+ = H_(k+1) $
 
-$ s = s_k, quad y = y_k, quad B = B_k $
+- 对称假设：
 
-并写
+$ H^+ = (H^+)^T $
 
-$ B^+ = B - (B s s^T B)/(s^T B s) + (y y^T)/(y^T s) $
-
-计算 $B^+s$：
-
-$ B^+ s = (B - (B s s^T B)/(s^T B s) + (y y^T)/(y^T s))s $
-
-把乘法分配到三项：
-
-$ B^+ s = B s - ((B s s^T B)s)/(s^T B s) + ((y y^T)s)/(y^T s) $
-
-第二项中，矩阵乘法从右向左看：
-
-$ (B s s^T B)s = B s s^T B s $
-
-其中 $s^T B s$ 是一个标量，因此
-
-$ B s s^T B s = B s (s^T B s) $
-
-所以
-
-$ ((B s s^T B)s)/(s^T B s) = (B s (s^T B s))/(s^T B s) = B s $
-
-第三项同理：
-
-$ (y y^T)s = y(y^T s) $
-
-于是
-
-$ ((y y^T)s)/(y^T s) = (y(y^T s))/(y^T s) = y $
-
-代回原式：
-
-$ B^+s = B s - B s + y $
-
-前两项抵消：
-
-$ B^+s = y $
-
-因此 BFGS 更新满足 $B_(k+1)s_k = y_k$。
-
-== 为什么更新保持对称
-
-假设 $B$ 对称，即 $B^T = B$。第一项 $B$ 对称。第二项的分子为 $B s s^T B$，它的转置是
-
-$ (B s s^T B)^T = B^T (s^T)^T s^T B^T $
-
-因为 $(s^T)^T = s$ 且 $B^T = B$，所以
-
-$ (B s s^T B)^T = B s s^T B $
-
-分母 $s^T B s$ 是标量，转置后不变，因此第二项对称。第三项满足
-
-$ (y y^T)^T = y y^T $
-
-所以 $B^+$ 仍然对称。
-
-== 正定性的完整证明
-
-设 $B$ 正定，且曲率条件成立：
+- 为了让更新保持正定，需要曲率条件：
 
 $ y^T s > 0 $
 
-任取非零向量 $z$，计算二次型：
+- $H$和$H^+$之间满足最小改变原则，因此用一个加权 Frobenius 范数衡量 $H^+ - H$ 的大小。权重矩阵 $W$ 要求对称正定：
 
-$ z^T B^+ z = z^T (B - (B s s^T B)/(s^T B s) + (y y^T)/(y^T s)) z $
+$ W = W^T, quad W > 0 $
 
-分配乘法：
+并且让 $W$ 在割线方向上把 $s$ 映到 $y$：
 
-$ z^T B^+ z = z^T B z - z^T (B s s^T B)/(s^T B s) z + z^T (y y^T)/(y^T s) z $
+$ W s = y $
 
-把标量分母提出：
+只要 $y^T s > 0$，这样的对称正定 $W$ 可以构造出来。
 
-$ z^T B^+ z = z^T B z - (z^T B s s^T B z)/(s^T B s) + (z^T y y^T z)/(y^T s) $
+这样我们就可以得到如下的优化问题：
 
-第二项分子中，$z^T B s$ 是标量，$s^T B z$ 也是标量。因为 $B$ 对称，
+$ min_(H^+) quad 1/2 norm(W^(1/2)(H^+ - H)W^(1/2))_F^2 quad \
+"s.t." quad H^+ = (H^+)^T, quad H^+ y = s $
 
-$ s^T B z = (z^T B s)^T = z^T B s $
+其中 $W$ 满足
 
-所以
+$ W = W^T, quad W > 0, quad W s = y $
 
-$ z^T B s s^T B z = (z^T B s)(s^T B z) = (z^T B s)^2 $
+== 逆形式的 BFGS 更新
 
-第三项分子为
-
-$ z^T y y^T z = (y^T z)^2 $
-
-于是
-
-$ z^T B^+ z = z^T B z - ((z^T B s)^2)/(s^T B s) + ((y^T z)^2)/(y^T s) $
-
-因为 $B$ 正定，可以定义内积
-
-$ angle.l z, s angle.r_B = z^T B s $
-
-Cauchy-Schwarz 不等式给出
-
-$ (z^T B s)^2 <= (z^T B z)(s^T B s) $
-
-由于 $s^T B s > 0$，两边除以它：
-
-$ ((z^T B s)^2)/(s^T B s) <= z^T B z $
-
-因此
-
-$ z^T B z - ((z^T B s)^2)/(s^T B s) >= 0 $
-
-又因为 $y^T s > 0$，
-
-$ ((y^T z)^2)/(y^T s) >= 0 $
-
-所以
-
-$ z^T B^+ z >= 0 $
-
-还要证明严格大于零。若 $z^T B^+z = 0$，上面两个非负项必须同时为零。第一部分为零意味着 Cauchy-Schwarz 取等号，所以 $z$ 与 $s$ 线性相关，存在标量 $alpha$ 使
-
-$ z = alpha s $
-
-第二部分为零意味着
-
-$ y^T z = 0 $
-
-代入 $z = alpha s$：
-
-$ y^T (alpha s) = 0 $
-
-把标量提出：
-
-$ alpha y^T s = 0 $
-
-由于 $y^T s > 0$，只能有
-
-$ alpha = 0 $
-
-于是
-
-$ z = 0 $
-
-这和我们任取非零 $z$ 矛盾。因此对所有非零 $z$，
-
-$ z^T B^+ z > 0 $
-
-所以 $B^+$ 正定。
-
-== 逆 Hessian 形式
-
-实际计算方向时，更常用 $H_k approx B_k^(-1)$，因为可以直接写
-
-$ p_k = -H_k g_k $
-
-BFGS 的逆更新为
-
-$ H_(k+1) = (I - rho s_k y_k^T) H_k (I - rho y_k s_k^T) + rho s_k s_k^T $
-
-其中
-
-$ rho = 1/(y_k^T s_k) $
-
-仍省略下标，定义
-
-$ H^+ = (I - rho s y^T) H (I - rho y s^T) + rho s s^T $
-
-验证它满足逆拟牛顿条件 $H^+y=s$。先代入 $y$：
-
-$ H^+ y = (I - rho s y^T) H (I - rho y s^T)y + rho s s^T y $
-
-先算最右边括号：
-
-$ (I - rho y s^T)y = y - rho y s^T y $
-
-因为 $s^T y = y^T s$，且 $rho = 1/(y^T s)$，所以
-
-$ rho s^T y = 1 $
-
-于是
-
-$ y - rho y s^T y = y - y = 0 $
-
-第一大项变成
-
-$ (I - rho s y^T)H 0 = 0 $
-
-再算第二项：
-
-$ rho s s^T y = rho s (s^T y) $
-
-代入 $rho = 1/(y^T s)$：
-
-$ rho s (s^T y) = (1/(y^T s)) s (y^T s) = s $
-
-因此
+逆形式的拟牛顿条件是
 
 $ H^+ y = s $
 
-逆拟牛顿条件成立。
+假设旧矩阵 $H$ 对称正定。接下来直接求解上一节给出的约束优化问题。
 
-== 逆形式的展开
+令
 
-从紧凑形式开始：
+$ A = W^(1/2) H^+ W^(1/2), quad M = W^(1/2) H W^(1/2), quad u = W^(-1/2)y $
 
-$ H^+ = (I - rho s y^T) H (I - rho y s^T) + rho s s^T $
+由 $W s = y$ 可得
 
-先展开右乘：
+$ u = W^(-1/2)y = W^(1/2)s $
 
-$ H(I - rho y s^T) = H - rho H y s^T $
+因为
 
-再左乘：
+$ H^+ = W^(-1/2) A W^(-1/2) $
 
-$ (I - rho s y^T)(H - rho H y s^T) $
+所以目标函数变为
 
-分成两部分：
+$ 1/2 norm(A - M)_F^2 $
 
-$ = I(H - rho H y s^T) - rho s y^T (H - rho H y s^T) $
+约束 $H^+ y = s$ 变为
 
-继续展开：
+$ W^(-1/2) A W^(-1/2)y = s $
 
-$ = H - rho H y s^T - rho s y^T H + rho^2 s y^T H y s^T $
+两边左乘 $W^(1/2)$：
 
-加上最后一项：
+$ A W^(-1/2)y = W^(1/2)s $
 
-$ H^+ = H - rho H y s^T - rho s y^T H + rho^2 s y^T H y s^T + rho s s^T $
+用 $u = W^(-1/2)y = W^(1/2)s$ 化简：
 
-其中 $y^T H y$ 是标量，所以
+$ A u = u $
 
-$ rho^2 s y^T H y s^T = rho^2 (y^T H y) s s^T $
+于是原问题等价地化为
 
-合并两个 $s s^T$ 项：
+$ min_A quad 1/2 norm(A - M)_F^2 quad \
+"s.t." quad A = A^T, quad A u = u $
 
-$ H^+ = H - rho H y s^T - rho s y^T H + (rho + rho^2 y^T H y) s s^T $
+写拉格朗日函数。由于 $A$ 要求对称，变化量 $d A$ 也只在对称矩阵中取：
 
-提取 $rho$：
+$ L(A, lambda) = 1/2 tr((A - M)^2) - 2 lambda^T(A u - u) $
 
-$ rho + rho^2 y^T H y = rho(1 + rho y^T H y) $
+由 Frobenius 范数平方的微分公式，见附录 A，对 $A$ 求一阶变分：
 
-因此展开形式为
+$ d L = tr((A - M)d A) - 2 lambda^T d A u $
 
-$ H^+ = H - rho H y s^T - rho s y^T H + rho(1 + rho y^T H y) s s^T $
+把第二项写成迹：
+
+$ lambda^T d A u = tr(lambda^T d A u) = tr(u lambda^T d A) $
+
+所以
+
+$ d L = tr((A - M - 2 u lambda^T)d A) $
+
+但 $d A$ 是对称的。只有矩阵的对称部分会影响这个内积，因此驻点条件是
+
+$ A - M - (u lambda^T + lambda u^T) = 0 $
+
+也就是
+
+$ A = M + u lambda^T + lambda u^T $
+
+把约束 $A u = u$ 代入：
+
+$ (M + u lambda^T + lambda u^T)u = u $
+
+展开：
+
+$ M u + u(lambda^T u) + lambda(u^T u) = u $
+
+记
+
+$ gamma = u^T u, quad delta = lambda^T u, quad eta = u^T M u $
+
+则
+
+$ M u + delta u + gamma lambda = u $
+
+移项得到
+
+$ gamma lambda = (1 - delta)u - M u $
+
+两边左乘 $u^T$：
+
+$ gamma u^T lambda = (1 - delta)u^T u - u^T M u $
+
+代入 $u^T lambda = delta$、$u^T u = gamma$ 和 $u^T M u = eta$：
+
+$ gamma delta = (1 - delta)gamma - eta $
+
+展开右边：
+
+$ gamma delta = gamma - gamma delta - eta $
+
+两边同时加上 $gamma delta$：
+
+$ 2 gamma delta = gamma - eta $
+
+由于 $gamma > 0$，所以
+
+$ delta = (gamma - eta)/(2 gamma) $
+
+代回
+
+$ gamma lambda = (1 - delta)u - M u $
+
+先计算 $1 - delta$：
+
+$ 1 - delta = 1 - (gamma - eta)/(2 gamma) $
+
+通分：
+
+$ 1 - delta = (2 gamma - gamma + eta)/(2 gamma) = (gamma + eta)/(2 gamma) $
+
+因此
+
+$ gamma lambda = ((gamma + eta)/(2 gamma))u - M u $
+
+两边除以 $gamma$：
+
+$ lambda = ((gamma + eta)/(2 gamma^2))u - (M u)/gamma $
+
+代回 $A = M + u lambda^T + lambda u^T$。先算 $u lambda^T$：
+
+$ u lambda^T = ((gamma + eta)/(2 gamma^2))u u^T - (u u^T M)/gamma $
+
+再算 $lambda u^T$：
+
+$ lambda u^T = ((gamma + eta)/(2 gamma^2))u u^T - (M u u^T)/gamma $
+
+两式相加：
+
+$ u lambda^T + lambda u^T = ((gamma + eta)/(gamma^2))u u^T - (u u^T M + M u u^T)/gamma $
+
+所以
+
+$ A = M - (M u u^T + u u^T M)/gamma + ((gamma + eta)/(gamma^2))u u^T $
+
+把最后一项写成更常用的形式：
+
+$ (gamma + eta)/(gamma^2) = (1 + eta/gamma)/gamma $
+
+于是
+
+$ A = M - (M u u^T + u u^T M)/(u^T u) + (1 + (u^T M u)/(u^T u))(u u^T)/(u^T u) $
+
+现在回到 $H^+$：
+
+$ H^+ = W^(-1/2) A W^(-1/2) $
+
+由 $u = W^(-1/2)y = W^(1/2)s$ 可得
+
+$ W^(-1/2)u = s $
+
+并且
+
+$ u^T u = s^T W s = s^T y = y^T s $
+
+还要化简 $M u$：
+
+$ M u = W^(1/2) H W^(1/2) W^(-1/2)y = W^(1/2)H y $
+
+所以
+
+$ W^(-1/2) M u = H y $
+
+同理，
+
+$ u^T M W^(-1/2) = y^T H $
+
+以及
+
+$ u^T M u = y^T H y $
+
+代回展开式：
+
+$ H^+ = H - (H y s^T + s y^T H)/(y^T s) + (1 + (y^T H y)/(y^T s))(s s^T)/(y^T s) $
+
+令
+
+$ rho = 1/(y^T s) $
+
+则
+
+$ H^+ = H - rho H y s^T - rho s y^T H + rho(1 + rho y^T H y)s s^T $
+
+这个展开式可以整理成更紧凑的乘积形式：
+
+$ H^+ = (I - rho s y^T)H(I - rho y s^T) + rho s s^T $
+
+恢复下标：
+
+$ H_(k+1) = (I - rho_k s_k y_k^T)H_k(I - rho_k y_k s_k^T) + rho_k s_k s_k^T $
+
+其中
+
+$ rho_k = 1/(y_k^T s_k) $
+
+这就是直接由逆形式约束优化问题推出的 BFGS 更新。
+
+== 验证对称性保持
+
+记
+
+$ V = I - rho y s^T $
+
+则
+
+$ V^T = I - rho s y^T $
+
+逆形式更新可以写成
+
+$ H^+ = V^T H V + rho s s^T $
+
+如果 $H$ 对称，则
+
+$ (V^T H V)^T = V^T H^T V = V^T H V $
+
+而
+
+$ (s s^T)^T = s s^T $
+
+所以 $H^+$ 仍然对称。
+
+== 验证正定性保持
+
+设 $H$ 正定，且曲率条件成立：
+
+$ y^T s > 0 $
+
+由于
+
+$ rho = 1/(y^T s) $
+
+所以
+
+$ rho > 0 $
+
+任取非零向量 $z$，计算二次型：
+
+$ z^T H^+ z = z^T(V^T H V + rho s s^T)z $
+
+分配乘法：
+
+$ z^T H^+ z = z^T V^T H V z + rho z^T s s^T z $
+
+第一项可写成
+
+$ z^T V^T H V z = (V z)^T H (V z) $
+
+第二项中，$z^T s$ 是标量，且 $s^T z = z^T s$，所以
+
+$ z^T s s^T z = (s^T z)^2 $
+
+于是
+
+$ z^T H^+ z = (V z)^T H(V z) + rho(s^T z)^2 $
+
+因为 $H$ 正定，第一项非负；因为 $rho > 0$，第二项也非负。因此
+
+$ z^T H^+ z >= 0 $
+
+还要证明严格大于零。若 $z^T H^+z = 0$，两个非负项必须同时为零：
+
+$ (V z)^T H(V z) = 0 $
+
+和
+
+$ rho(s^T z)^2 = 0 $
+
+由 $H$ 正定可知第一式推出
+
+$ V z = 0 $
+
+由 $rho > 0$ 可知第二式推出
+
+$ s^T z = 0 $
+
+把 $V = I - rho y s^T$ 代入 $V z = 0$：
+
+$ (I - rho y s^T)z = 0 $
+
+展开：
+
+$ z - rho y(s^T z) = 0 $
+
+由于 $s^T z = 0$，得到
+
+$ z = 0 $
+
+这和任取非零 $z$ 矛盾。因此对所有非零 $z$，
+
+$ z^T H^+ z > 0 $
+
+所以 $H^+$ 正定。
 
 == 算法流程
 
@@ -369,12 +455,58 @@ BFGS 的一次迭代如下：
 
 == 小结
 
-BFGS 的核心不是凭空构造一个公式，而是在满足拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。Hessian 形式
-
-$ B_(k+1) = B_k - (B_k s_k s_k^T B_k)/(s_k^T B_k s_k) + (y_k y_k^T)/(y_k^T s_k) $
-
-说明它如何修正曲率；逆 Hessian 形式
+BFGS 的核心不是凭空构造一个公式，而是在满足逆拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。逆 Hessian 更新
 
 $ H_(k+1) = (I - rho_k s_k y_k^T) H_k (I - rho_k y_k s_k^T) + rho_k s_k s_k^T $
 
-则直接用于计算搜索方向。只要线搜索保证 $y_k^T s_k > 0$，BFGS 就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。
+可以直接用于计算搜索方向。只要线搜索保证 $y_k^T s_k > 0$，BFGS 就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。
+
+== 附录 A：Frobenius 范数平方的微分
+
+对任意矩阵 $X in RR^(m times n)$，Frobenius 范数定义为
+
+$ norm(X)_F = sqrt(sum_(i=1)^m sum_(j=1)^n x_(i j)^2) $
+
+也可以写成迹的形式：
+
+$ norm(X)_F = sqrt(tr(X^T X)) $
+
+因此
+
+$ norm(X)_F^2 = tr(X^T X) $
+
+更一般地，若 $M$ 是与 $X$ 同型的常矩阵，则
+
+$ phi(X) = 1/2 norm(X - M)_F^2 $
+
+的微分为
+
+$ d phi = tr((X - M)^T d X) $
+
+如果 $X$ 和 $M$ 都是对称矩阵，并且只考虑对称方向上的变化 $d X = d X^T$，则
+
+$ d phi = tr((X - M)d X) $
+
+证明如下。由 Frobenius 范数的迹表示，
+
+$ phi(X) = 1/2 tr((X - M)^T (X - M)) $
+
+对两边取微分：
+
+$ d phi = 1/2 d tr((X - M)^T (X - M)) $
+
+因为 $M$ 是常矩阵，所以 $d(X - M) = d X$，从而
+
+$ d phi = 1/2 tr(d X^T (X - M) + (X - M)^T d X) $
+
+利用迹的转置不变性：
+
+$ tr(d X^T (X - M)) = tr(((X - M)^T d X)^T) = tr((X - M)^T d X) $
+
+所以两项相同，得到
+
+$ d phi = tr((X - M)^T d X) $
+
+若 $X$、$M$ 和 $d X$ 都对称，则 $(X - M)^T = X - M$，于是
+
+$ d phi = tr((X - M)d X) $
