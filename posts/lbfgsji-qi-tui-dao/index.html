@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>
+    
+      LBFGS及其推导 · Avandar2024&#x27;s blog
+    
+  </title>
+  <meta name="description" content="Personal writing about coding and life.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="https://Avandar2024.github.io/blog/main.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.renderMathInElement) return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到正文</a>
+
+  <div class="language-switch" aria-label="当前语言">
+    <span aria-current="true">简体中文</span>
+  </div>
+
+  <div class="shell">
+    <header class="site-header">
+      <a class="brand" href="https://Avandar2024.github.io/blog">
+        <img class="brand-mark" src="https://Avandar2024.github.io/blog/brand-mark.svg" alt="" aria-hidden="true">
+        <span>Avandar2024&#x27;s blog</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        
+          
+            <a href="/">Home</a>
+          
+        
+          
+            <a href="/about/">About</a>
+          
+        
+          
+            <a href="/posts/">Writing</a>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Category</span>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Friends</span>
+          
+        
+          
+            <a href="/search/">Search</a>
+          
+        
+      </nav>
+    </header>
+
+    <main id="main-content" class="content" tabindex="-1">
+      
+  <div class="article-layout">
+    
+      <nav class="article-toc" aria-label="文章导航">
+        <p>目录</p>
+        <ol>
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/lbfgsji-qi-tui-dao/#cong-di-gui-de-jiao-du-kan">从递归的角度看</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/lbfgsji-qi-tui-dao/#two-loop-recursion">two-loop recursion</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/lbfgsji-qi-tui-dao/#pythondai-ma-shi-xian">python代码实现</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/lbfgsji-qi-tui-dao/#h-0-k-de-xuan-qu">$H_{0}^{k}$的选取</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/lbfgsji-qi-tui-dao/#geng-xin-qu-lu-dui">更新曲率对</a></li>
+            
+          
+        </ol>
+      </nav>
+    
+    <article class="article prose">
+      <header class="article-header">
+        
+          <p class="article-date">2026-06-10</p>
+        
+        <h1>LBFGS及其推导</h1>
+        
+        
+          <p class="article-date">5 min read</p>
+        
+      </header>
+      <p>在 BFGS 中，我们维护一个逆 Hessian 近似 $H_{k}$，然后用</p>
+<p>$$p_{k} = - H_{k}g_{k}$$</p>
+<p>计算搜索方向。更新公式是</p>
+<p>$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$</p>
+<p>其中</p>
+<p>$$s_{k} = x_{k + 1} - x_{k},\quad y_{k} = g_{k + 1} - g_{k},\quad\rho_{k} = \frac{1}{y_{k}^{T}s_{k}}$$</p>
+<p>BFGS
+本身是一个近似算法，但是还是局限于用矩阵近似矩阵的思路。但问题在于，只要使用到矩阵，则空间复杂度至少是
+$O\left( n^{2} \right)$，每次矩阵乘法也至少是
+$O\left( n^{2} \right)$。那么，我们能在不使用矩阵的情况下近似矩阵吗？</p>
+<p>答案是可以的，这就是L-BFGS。其核心是：不显式保存 $H_{k}$，只保存最近 $m$
+组 $\left( s_{i},y_{i} \right)$，并且只在需要搜索方向时计算乘积
+$H_{k}g_{k}$。考虑到更新时实际用到的是$H_{k}g_{k}$，这种不直接计算$H_{k}$的方式颇有核函数的巧妙意味。</p>
+<h2 id="cong-di-gui-de-jiao-du-kan">从递归的角度看</h2>
+<p>记一次 BFGS 逆矩阵更新为</p>
+<p>$$H_{i + 1} = V_{i}^{T}H_{i}V_{i} + \rho_{i}s_{i}s_{i}^{T}$$</p>
+<p>其中</p>
+<p>$$V_{i} = I - \rho_{i}y_{i}s_{i}^{T},\quad V_{i}^{T} = I - \rho_{i}s_{i}y_{i}^{T}$$</p>
+<p>现在我们不关心完整的 $H_{i + 1}$，只关心它乘以某个向量 $q_{i + 1}$：</p>
+<p>$$H_{i + 1}q_{i + 1} = V_{i}^{T}H_{i}V_{i}q_{i + 1} + \rho_{i}s_{i}s_{i}^{T}q_{i + 1}$$</p>
+<p>记 $V_{i}q_{i + 1} = q_{i}$，则
+$$H_{i + 1}q_{i + 1} = V_{i}^{T}H_{i}q_{i} + \rho_{i}s_{i}s_{i}^{T}q_{i + 1}$$
+<span id="recursion"></span></p>
+<p>这个线性方程定义了我们需要的递归。</p>
+<p>同时考虑一个细节：递归需要一个初始值，即$H_{0}$。</p>
+<h2 id="two-loop-recursion">two-loop recursion</h2>
+<p>下面把递归算法改写成常见的two-loop recursion。</p>
+<p>goal :</p>
+<p><a href="https://Avandar2024.github.io/blog/posts/lbfgsji-qi-tui-dao/#recursion">(recursion)</a></p>
+<p>令初始向量</p>
+<p>$$q = g_{k}$$</p>
+<p>由于 $V_{i}q_{i + 1} = q_{i}$,
+为了避免计算$V_{i}$的逆矩阵，考虑先进行$i + 1 \rightarrow i$
+方向的更新，于是我们得到了first-loop</p>
+<p>$$\alpha_{i} = \rho_{i}s_{i}^{T}q$$</p>
+<p>$$q = q - \alpha_{i}y_{i}$$</p>
+<p>可以看到这里产生了副产物
+$\alpha_{i}$，由于后面的计算可以用到，先存起来。</p>
+<p>到底以后，用一个便宜的初始逆 Hessian 近似：</p>
+<p>$$r = H_{0}^{k}q$$</p>
+<p>然后第二层循环在$i \rightarrow i + 1$的方向上推回来即可，出于复用$\alpha_{i}$的考虑在形式上做了变换：</p>
+<p>$$\beta_{i} = \rho_{i}y_{i}^{T}r$$</p>
+<p>$$r = r + s_{i}\left( \alpha_{i} - \beta_{i} \right)$$</p>
+<h2 id="pythondai-ma-shi-xian">python代码实现</h2>
+<p>它的内存开销是 $O(mn)$，因为只存 $m$ 组长度为 $n$
+的向量。一次方向计算需要两遍遍历曲率对，每组曲率对做常数次点积和 axpy
+操作，所以时间复杂度是 $O(mn)$。</p>
+<details class="fold-block">
+  <summary>code: 一个最小 Python 版本</summary>
+  <div class="fold-content">
+    <pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="python"><span class="giallo-l"><span style="color: #CBA6F7;">import</span><span> numpy</span><span style="color: #CBA6F7;"> as</span><span> np</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">def</span><span style="color: #89B4FA;font-style: italic;"> lbfgs_direction</span><span style="color: #9399B2;">(</span><span style="color: #EBA0AC;font-style: italic;">g</span><span style="color: #9399B2;">,</span><span style="color: #EBA0AC;font-style: italic;"> pairs</span><span style="color: #9399B2;">):</span></span>
+<span class="giallo-l"><span style="color: #A6E3A1;">    &quot;&quot;&quot;Return the L-BFGS search direction.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #A6E3A1;">    pairs stores (s, y, rho) from old to new.</span></span>
+<span class="giallo-l"><span style="color: #A6E3A1;">    &quot;&quot;&quot;</span></span>
+<span class="giallo-l"><span>    q</span><span style="color: #94E2D5;"> =</span><span> g</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">copy</span><span style="color: #9399B2;">()</span></span>
+<span class="giallo-l"><span>    alpha</span><span style="color: #94E2D5;"> =</span><span style="color: #9399B2;"> [</span><span style="color: #FAB387;">0.0</span><span style="color: #9399B2;">]</span><span style="color: #94E2D5;"> *</span><span style="color: #FAB387;font-style: italic;"> len</span><span style="color: #9399B2;">(</span><span>pairs</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">    for</span><span> i</span><span style="color: #CBA6F7;"> in</span><span style="color: #FAB387;font-style: italic;"> range</span><span style="color: #9399B2;">(</span><span style="color: #FAB387;font-style: italic;">len</span><span style="color: #9399B2;">(</span><span>pairs</span><span style="color: #9399B2;">)</span><span style="color: #94E2D5;"> -</span><span style="color: #FAB387;"> 1</span><span style="color: #9399B2;">,</span><span style="color: #94E2D5;"> -</span><span style="color: #FAB387;">1</span><span style="color: #9399B2;">,</span><span style="color: #94E2D5;"> -</span><span style="color: #FAB387;">1</span><span style="color: #9399B2;">):</span></span>
+<span class="giallo-l"><span>        s</span><span style="color: #9399B2;">,</span><span> y</span><span style="color: #9399B2;">,</span><span> rho</span><span style="color: #94E2D5;"> =</span><span style="color: #EBA0AC;font-style: italic;"> pairs</span><span style="color: #9399B2;">[</span><span style="color: #EBA0AC;font-style: italic;">i</span><span style="color: #9399B2;">]</span></span>
+<span class="giallo-l"><span style="color: #EBA0AC;font-style: italic;">        alpha</span><span style="color: #9399B2;">[</span><span style="color: #EBA0AC;font-style: italic;">i</span><span style="color: #9399B2;">]</span><span style="color: #94E2D5;"> =</span><span> rho</span><span style="color: #94E2D5;"> *</span><span> np</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">dot</span><span style="color: #9399B2;">(</span><span>s</span><span style="color: #9399B2;">,</span><span> q</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span>        q</span><span style="color: #94E2D5;"> -=</span><span style="color: #EBA0AC;font-style: italic;"> alpha</span><span style="color: #9399B2;">[</span><span style="color: #EBA0AC;font-style: italic;">i</span><span style="color: #9399B2;">]</span><span style="color: #94E2D5;"> *</span><span> y</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">    if</span><span> pairs</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span>        s</span><span style="color: #9399B2;">,</span><span> y</span><span style="color: #9399B2;">,</span><span> _</span><span style="color: #94E2D5;"> =</span><span style="color: #EBA0AC;font-style: italic;"> pairs</span><span style="color: #9399B2;">[</span><span style="color: #94E2D5;">-</span><span style="color: #FAB387;font-style: italic;">1</span><span style="color: #9399B2;">]</span></span>
+<span class="giallo-l"><span>        gamma</span><span style="color: #94E2D5;"> =</span><span> np</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">dot</span><span style="color: #9399B2;">(</span><span>s</span><span style="color: #9399B2;">,</span><span> y</span><span style="color: #9399B2;">)</span><span style="color: #94E2D5;"> /</span><span> np</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">dot</span><span style="color: #9399B2;">(</span><span>y</span><span style="color: #9399B2;">,</span><span> y</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span>        r</span><span style="color: #94E2D5;"> =</span><span> gamma</span><span style="color: #94E2D5;"> *</span><span> q</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">    else</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span>        r</span><span style="color: #94E2D5;"> =</span><span> q</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">    for</span><span> i</span><span style="color: #9399B2;">, (</span><span>s</span><span style="color: #9399B2;">,</span><span> y</span><span style="color: #9399B2;">,</span><span> rho</span><span style="color: #9399B2;">)</span><span style="color: #CBA6F7;"> in</span><span style="color: #FAB387;font-style: italic;"> enumerate</span><span style="color: #9399B2;">(</span><span>pairs</span><span style="color: #9399B2;">):</span></span>
+<span class="giallo-l"><span>        beta</span><span style="color: #94E2D5;"> =</span><span> rho</span><span style="color: #94E2D5;"> *</span><span> np</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">dot</span><span style="color: #9399B2;">(</span><span>y</span><span style="color: #9399B2;">,</span><span> r</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span>        r</span><span style="color: #94E2D5;"> +=</span><span> s</span><span style="color: #94E2D5;"> *</span><span style="color: #9399B2;"> (</span><span style="color: #EBA0AC;font-style: italic;">alpha</span><span style="color: #9399B2;">[</span><span style="color: #EBA0AC;font-style: italic;">i</span><span style="color: #9399B2;">]</span><span style="color: #94E2D5;"> -</span><span> beta</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">    return</span><span style="color: #94E2D5;"> -</span><span>r</span></span></code></pre>
+  </div>
+</details>
+<h2 id="h-0-k-de-xuan-qu">$H_{0}^{k}$的选取</h2>
+<p>暂时不会。网上找到的资料显示，常见的做法是选取一个标量乘以单位矩阵：$H_{0} = \gamma I$</p>
+<h2 id="geng-xin-qu-lu-dui">更新曲率对</h2>
+<p>一次优化迭代仍然和 BFGS 一样：</p>
+<ol>
+<li>
+<p>用 two-loop recursion 计算方向 $p_{k}$。</p>
+</li>
+<li>
+<p>线搜索得到步长 $\alpha_{k}$。</p>
+</li>
+<li>
+<p>更新参数：</p>
+<p>$$x_{k + 1} = x_{k} + \alpha_{k}p_{k}$$</p>
+</li>
+<li>
+<p>计算新梯度 $g_{k + 1}$。</p>
+</li>
+<li>
+<p>构造曲率对：</p>
+<p>$$s_{k} = x_{k + 1} - x_{k}$$</p>
+<p>$$y_{k} = g_{k + 1} - g_{k}$$</p>
+</li>
+<li>
+<p>如果 $y_{k}^{T}s_{k}$ 足够大，则保存</p>
+<p>$$\rho_{k} = \frac{1}{y_{k}^{T}s_{k}}$$</p>
+<p>并把 $\left( s_{k},y_{k},\rho_{k} \right)$ 放进队列尾部。</p>
+</li>
+<li>
+<p>如果队列长度超过 $m$，丢掉最旧的一组。</p>
+</li>
+</ol>
+<p>这里的判断很重要。理论上需要</p>
+<p>$$y_{k}^{T}s_{k} &gt; 0$$</p>
+<p>才能保持正定性。实际代码中通常还会要求它不要太接近零，例如</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>ys = dot(y, s)</span></span>
+<span class="giallo-l"><span>if ys &gt; eps * norm(s) * norm(y):</span></span>
+<span class="giallo-l"><span>    push_pair(s, y, 1 / ys)</span></span></code></pre>
+<p>如果条件不满足，常见做法是跳过这次曲率更新，而不是把坏的曲率对塞进队列。</p>
+
+    </article>
+  </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <p>Copyright &copy; 2018-2026 Avandar2024</p>
+      <nav class="site-nav site-nav-footer" aria-label="页脚导航">
+        
+          
+            <a href="/">Home</a>
+          
+        
+          
+            <a href="/about/">About</a>
+          
+        
+          
+            <a href="/posts/">Writing</a>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Category</span>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Friends</span>
+          
+        
+          
+            <a href="/search/">Search</a>
+          
+        
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>

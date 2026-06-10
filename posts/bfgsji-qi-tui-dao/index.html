@@ -114,7 +114,7 @@
     <article class="article prose">
       <header class="article-header">
         
-          <p class="article-date">2026-06-10</p>
+          <p class="article-date">2026-06-09</p>
         
         <h1>BFGS及其推导</h1>
         
@@ -169,9 +169,9 @@ $B_{k}$ 近似 $G_{k}$，或用 $H_{k}$ 近似 $G_{k}^{- 1}$。</p>
 <p>两边左乘 $B_{k + 1}^{- 1}$：</p>
 <p>$$B_{k + 1}^{- 1}B_{k + 1}s_{k} = B_{k + 1}^{- 1}y_{k}$$</p>
 <p>左边化简为 $s_{k}$，右边记为 $H_{k + 1}y_{k}$，得到</p>
-<p><span id="condition"></span>$H_{k + 1}y_{k} = s_{k} \tag{condition}$</p>
+<p><span id="condition"></span>$$H_{k + 1}y_{k} = s_{k} \tag{condition}$$</p>
 <h2 id="jia-she-he-you-hua-wen-ti-ding-yi">假设和优化问题定义</h2>
-<p>显然，仅 <a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/#condition">[condition]</a>{.ref} 是无法唯一确定 $H_{k + 1}$
+<p>显然，仅 <a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/#condition">(condition)</a> 是无法唯一确定 $H_{k + 1}$
 的。我们需要添加其他的假设来解出唯一的 $H_{k + 1}$。</p>
 <p>为了减少下标，记</p>
 <p>$$s = s_{k},\quad y = y_{k},\quad H = H_{k},\quad H^{+} = H_{k + 1}$$</p>
@@ -190,7 +190,7 @@ $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：</li>
 <p>只要 $y^{T}s &gt; 0$，这样的对称正定 $W$ 可以构造出来。</p>
 <p>这样我们就可以得到如下的优化问题：</p>
 <p>$$\begin{array}{r}
-\min\limits_{H^{+}}\quad\frac{1}{2}\left| {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right|_{F}^{2}\quad \\[0.65em]
+\min\limits_{H^{+}}\quad\frac{1}{2}\left\Vert {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right\Vert_{F}^{2}\quad \\[0.65em]
 \text{s.t. }\quad H^{+} = \left( H^{+} \right)^{T},\quad H^{+}y = s
 \end{array}$$</p>
 <p>其中 $W$ 满足</p>
@@ -206,7 +206,7 @@ $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：</li>
 <p>因为</p>
 <p>$$H^{+} = W^{- \frac{1}{2}}AW^{- \frac{1}{2}}$$</p>
 <p>所以目标函数变为</p>
-<p>$$\frac{1}{2}\left| {A - M} \right|_{F}^{2}$$</p>
+<p>$$\frac{1}{2}\left\Vert {A - M} \right\Vert_{F}^{2}$$</p>
 <p>约束 $H^{+}y = s$ 变为</p>
 <p>$$W^{- \frac{1}{2}}AW^{- \frac{1}{2}}y = s$$</p>
 <p>两边左乘 $W^{\frac{1}{2}}$：</p>
@@ -215,7 +215,7 @@ $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：</li>
 <p>$$Au = u$$</p>
 <p>于是原问题等价地化为</p>
 <p>$$\begin{array}{r}
-\min\limits_{A}\quad\frac{1}{2}\left| {A - M} \right|_{F}^{2}\quad \\[0.65em]
+\min\limits_{A}\quad\frac{1}{2}\left\Vert {A - M} \right\Vert_{F}^{2}\quad \\[0.65em]
 \text{s.t. }\quad A = A^{T},\quad Au = u
 \end{array}$$</p>
 <p>写拉格朗日函数。由于 $A$ 要求对称，变化量 $dA$ 也只在对称矩阵中取：</p>
@@ -224,47 +224,32 @@ $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：</li>
 <details class="fold-block">
   <summary>def: Frobenius 范数</summary>
   <div class="fold-content">
-    对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为
+    <p>对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为</p>
+<p>$$\left\Vert X \right\Vert_{F} = \sqrt{\sum_{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$</p>
+<p>也可以写成迹的形式：</p>
+<p>$$\left\Vert X \right\Vert_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$</p>
 
-$$\left\| X \right\|_{F} = \sqrt{\sum_{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$
-
-也可以写成迹的形式：
-
-$$\left\| X \right\|_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$
   </div>
 </details>
 <details class="fold-block">
   <summary>proof: Frobenius 范数平方的微分</summary>
   <div class="fold-content">
-    考虑
+    <p>考虑</p>
+<p>$$\varphi(X) = \frac{1}{2}\left\Vert X \right\Vert_{F}^{2}$$</p>
+<p>其微分为</p>
+<p>$$d\varphi = \operatorname{tr}(X^{T}dX)$$</p>
+<p>证明如下：</p>
+<p>由 Frobenius 范数的迹表示，</p>
+<p>$$\varphi(X) = \frac{1}{2}\operatorname{tr}(X^{T}X)$$</p>
+<p>对两边取微分：</p>
+<p>$$d\varphi = \frac{1}{2}d\operatorname{tr}(X^{T}X)$$</p>
+<p>从而</p>
+<p>$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}X + X^{T}dX)$$</p>
+<p>利用迹的转置不变性：</p>
+<p>$$\operatorname{tr}(dX^{T}X) = \operatorname{tr}(\left( (X)^{T}dX \right)^{T}) = \operatorname{tr}((X)^{T}dX)$$</p>
+<p>所以两项相同，得到</p>
+<p>$$d\varphi = \operatorname{tr}((X)^{T}dX)$$</p>
 
-$$\varphi(X) = \frac{1}{2}\left\| X \right\|_{F}^{2}$$
-
-其微分为
-
-$$d\varphi = \operatorname{tr}(X^{T}dX)$$
-
-证明如下：
-
-由 Frobenius 范数的迹表示，
-
-$$\varphi(X) = \frac{1}{2}\operatorname{tr}(X^{T}X)$$
-
-对两边取微分：
-
-$$d\varphi = \frac{1}{2}d\operatorname{tr}(X^{T}X)$$
-
-从而
-
-$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}X + X^{T}dX)$$
-
-利用迹的转置不变性：
-
-$$\operatorname{tr}(dX^{T}X) = \operatorname{tr}(\left( (X)^{T}dX \right)^{T}) = \operatorname{tr}((X)^{T}dX)$$
-
-所以两项相同，得到
-
-$$d\varphi = \operatorname{tr}((X)^{T}dX)$$
   </div>
 </details>
 <p>$$dL = \operatorname{tr}((A - M)dA) - 2\lambda^{T}dAu$$</p>
@@ -358,7 +343,7 @@ $$d\varphi = \operatorname{tr}((X)^{T}dX)$$
 <p>$$\left( ss^{T} \right)^{T} = ss^{T}$$</p>
 <p>所以 $H^{+}$ 仍然对称。</p>
 <h2 id="yan-zheng-zheng-ding-xing-bao-chi">验证正定性保持</h2>
-<p>在 <a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/#condition">[condition]</a>{.ref} 中，左乘 $y^{T}$, 则显然
+<p>在 <a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/#condition">(condition)</a> 中，左乘 $y^{T}$, 则显然
 $$y^{T}s &gt; 0$$是 $H^{+}$ 正定的充要条件。</p>
 <h2 id="suan-fa-liu-cheng">算法流程</h2>
 <p>BFGS 的一次迭代如下：</p>
