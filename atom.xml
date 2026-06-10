@@ -5,12 +5,12 @@
     <link rel="self" type="application/atom+xml" href="https://Avandar2024.github.io/blog/atom.xml"/>
     <link rel="alternate" type="text/html" href="https://Avandar2024.github.io/blog"/>
     <generator uri="https://www.getzola.org/">Zola</generator>
-    <updated>2026-06-09T00:00:00+00:00</updated>
+    <updated>2026-06-10T00:00:00+00:00</updated>
     <id>https://Avandar2024.github.io/blog/atom.xml</id>
     <entry xml:lang="en">
-        <title>BFGS及其不跳步推导</title>
-        <published>2026-06-09T00:00:00+00:00</published>
-        <updated>2026-06-09T00:00:00+00:00</updated>
+        <title>BFGS及其推导</title>
+        <published>2026-06-10T00:00:00+00:00</published>
+        <updated>2026-06-10T00:00:00+00:00</updated>
         
         <author>
           <name>
@@ -20,11 +20,10 @@
           </name>
         </author>
         
-        <link rel="alternate" type="text/html" href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/"/>
-        <id>https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/</id>
+        <link rel="alternate" type="text/html" href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/"/>
+        <id>https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/</id>
         
-        <content type="html" xml:base="https://Avandar2024.github.io/blog/posts/bfgsji-qi-bu-tiao-bu-tui-dao/">&lt;h1 id=&quot;bfgs-ji-qi-bu-tiao-bu-tui-dao&quot;&gt;BFGS 及其不跳步推导&lt;&#x2F;h1&gt;
-&lt;p&gt;BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian
+        <content type="html" xml:base="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/">&lt;p&gt;BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian
 矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、逆
 Hessian 更新和正定性几个角度，把 BFGS 的公式一步一步推出。&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;cong-niu-dun-fa-kai-shi&quot;&gt;从牛顿法开始&lt;&#x2F;h2&gt;
@@ -47,8 +46,6 @@ $f\left( x_{k} \right)$ 对 $p$ 的梯度为 $0$，线性项 $g_{k}^{T}p$
 &lt;p&gt;两边同时减去 $g_{k}$：&lt;&#x2F;p&gt;
 &lt;p&gt;$$G_{k}p = - g_{k}$$&lt;&#x2F;p&gt;
 &lt;p&gt;如果 $G_{k}$ 可逆，两边左乘 $G_{k}^{- 1}$：&lt;&#x2F;p&gt;
-&lt;p&gt;$$G_{k}^{- 1}G_{k}p = - G_{k}^{- 1}g_{k}$$&lt;&#x2F;p&gt;
-&lt;p&gt;因为 $G_{k}^{- 1}G_{k} = I$，所以&lt;&#x2F;p&gt;
 &lt;p&gt;$$p = - G_{k}^{- 1}g_{k}$$&lt;&#x2F;p&gt;
 &lt;p&gt;这就是牛顿方向。难点在于 $G_{k}$ 往往很贵，求逆更贵，所以拟牛顿法用
 $B_{k}$ 近似 $G_{k}$，或用 $H_{k}$ 近似 $G_{k}^{- 1}$。&lt;&#x2F;p&gt;
@@ -68,27 +65,22 @@ $B_{k}$ 近似 $G_{k}$，或用 $H_{k}$ 近似 $G_{k}^{- 1}$。&lt;&#x2F;p&gt;
 &lt;p&gt;$$y_{k} \approx G_{k + 1}s_{k}$$&lt;&#x2F;p&gt;
 &lt;p&gt;拟牛顿法要求新的 Hessian 近似 $B_{k + 1}$ 精确满足这个关系：&lt;&#x2F;p&gt;
 &lt;p&gt;$$B_{k + 1}s_{k} = y_{k}$$&lt;&#x2F;p&gt;
-&lt;p&gt;这叫割线条件，也叫拟牛顿条件。&lt;&#x2F;p&gt;
 &lt;p&gt;如果改用逆 Hessian 近似 $H_{k + 1} \approx B_{k + 1}^{- 1}$，从&lt;&#x2F;p&gt;
 &lt;p&gt;$$B_{k + 1}s_{k} = y_{k}$$&lt;&#x2F;p&gt;
 &lt;p&gt;两边左乘 $B_{k + 1}^{- 1}$：&lt;&#x2F;p&gt;
 &lt;p&gt;$$B_{k + 1}^{- 1}B_{k + 1}s_{k} = B_{k + 1}^{- 1}y_{k}$$&lt;&#x2F;p&gt;
 &lt;p&gt;左边化简为 $s_{k}$，右边记为 $H_{k + 1}y_{k}$，得到&lt;&#x2F;p&gt;
-&lt;p&gt;&lt;span id=&quot;condition&quot;&gt;&lt;&#x2F;span&gt;$$H_{k + 1}y_{k} = s_{k} \tag{condition}$$&lt;&#x2F;p&gt;
-&lt;p&gt;这就是逆形式的拟牛顿条件。&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;span id=&quot;condition&quot;&gt;&lt;&#x2F;span&gt;$H_{k + 1}y_{k} = s_{k} \tag{condition}$&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;jia-she-he-you-hua-wen-ti-ding-yi&quot;&gt;假设和优化问题定义&lt;&#x2F;h2&gt;
-&lt;p&gt;显然，仅 &lt;a href=&quot;https:&#x2F;&#x2F;Avandar2024.github.io&#x2F;blog&#x2F;posts&#x2F;bfgsji-qi-bu-tiao-bu-tui-dao&#x2F;#condition&quot;&gt;(condition)&lt;&#x2F;a&gt; 是无法确定 $H_{k + 1}$
+&lt;p&gt;显然，仅 &lt;a href=&quot;https:&#x2F;&#x2F;Avandar2024.github.io&#x2F;blog&#x2F;posts&#x2F;bfgsji-qi-tui-dao&#x2F;#condition&quot;&gt;[condition]&lt;&#x2F;a&gt;{.ref} 是无法唯一确定 $H_{k + 1}$
 的。我们需要添加其他的假设来解出唯一的 $H_{k + 1}$。&lt;&#x2F;p&gt;
 &lt;p&gt;为了减少下标，记&lt;&#x2F;p&gt;
 &lt;p&gt;$$s = s_{k},\quad y = y_{k},\quad H = H_{k},\quad H^{+} = H_{k + 1}$$&lt;&#x2F;p&gt;
+&lt;p&gt;则有如下的假设：&lt;&#x2F;p&gt;
 &lt;ul&gt;
 &lt;li&gt;对称假设：&lt;&#x2F;li&gt;
 &lt;&#x2F;ul&gt;
 &lt;p&gt;$$H^{+} = \left( H^{+} \right)^{T}$$&lt;&#x2F;p&gt;
-&lt;ul&gt;
-&lt;li&gt;为了让更新保持正定，需要曲率条件：&lt;&#x2F;li&gt;
-&lt;&#x2F;ul&gt;
-&lt;p&gt;$$y^{T}s &amp;gt; 0$$&lt;&#x2F;p&gt;
 &lt;ul&gt;
 &lt;li&gt;$H$和$H^{+}$之间满足最小改变原则，因此用一个加权 Frobenius 范数衡量
 $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：&lt;&#x2F;li&gt;
@@ -129,7 +121,53 @@ $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：&lt;&#x2F;li&gt;
 \end{array}$$&lt;&#x2F;p&gt;
 &lt;p&gt;写拉格朗日函数。由于 $A$ 要求对称，变化量 $dA$ 也只在对称矩阵中取：&lt;&#x2F;p&gt;
 &lt;p&gt;$$L(A,\lambda) = \frac{1}{2}\operatorname{tr}((A - M)^{2}) - 2\lambda^{T(Au - u)}$$&lt;&#x2F;p&gt;
-&lt;p&gt;由 Frobenius 范数平方的微分公式，见附录 A，对 $A$ 求一阶变分：&lt;&#x2F;p&gt;
+&lt;p&gt;由 Frobenius 范数平方的微分公式，对 $A$ 求一阶变分：&lt;&#x2F;p&gt;
+&lt;details class=&quot;fold-block&quot;&gt;
+  &lt;summary&gt;def: Frobenius 范数&lt;&#x2F;summary&gt;
+  &lt;div class=&quot;fold-content&quot;&gt;
+    对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为
+
+$$\left\| X \right\|_{F} = \sqrt{\sum_{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$
+
+也可以写成迹的形式：
+
+$$\left\| X \right\|_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$
+  &lt;&#x2F;div&gt;
+&lt;&#x2F;details&gt;
+&lt;details class=&quot;fold-block&quot;&gt;
+  &lt;summary&gt;proof: Frobenius 范数平方的微分&lt;&#x2F;summary&gt;
+  &lt;div class=&quot;fold-content&quot;&gt;
+    考虑
+
+$$\varphi(X) = \frac{1}{2}\left\| X \right\|_{F}^{2}$$
+
+其微分为
+
+$$d\varphi = \operatorname{tr}(X^{T}dX)$$
+
+证明如下：
+
+由 Frobenius 范数的迹表示，
+
+$$\varphi(X) = \frac{1}{2}\operatorname{tr}(X^{T}X)$$
+
+对两边取微分：
+
+$$d\varphi = \frac{1}{2}d\operatorname{tr}(X^{T}X)$$
+
+从而
+
+$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}X + X^{T}dX)$$
+
+利用迹的转置不变性：
+
+$$\operatorname{tr}(dX^{T}X) = \operatorname{tr}(\left( (X)^{T}dX \right)^{T}) = \operatorname{tr}((X)^{T}dX)$$
+
+所以两项相同，得到
+
+$$d\varphi = \operatorname{tr}((X)^{T}dX)$$
+  &lt;&#x2F;div&gt;
+&lt;&#x2F;details&gt;
 &lt;p&gt;$$dL = \operatorname{tr}((A - M)dA) - 2\lambda^{T}dAu$$&lt;&#x2F;p&gt;
 &lt;p&gt;把第二项写成迹：&lt;&#x2F;p&gt;
 &lt;p&gt;$$\lambda^{T}dAu = \operatorname{tr}(\lambda^{T}dAu) = \operatorname{tr}(u\lambda^{T}dA)$$&lt;&#x2F;p&gt;
@@ -221,41 +259,8 @@ $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：&lt;&#x2F;li&gt;
 &lt;p&gt;$$\left( ss^{T} \right)^{T} = ss^{T}$$&lt;&#x2F;p&gt;
 &lt;p&gt;所以 $H^{+}$ 仍然对称。&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;yan-zheng-zheng-ding-xing-bao-chi&quot;&gt;验证正定性保持&lt;&#x2F;h2&gt;
-&lt;p&gt;设 $H$ 正定，且曲率条件成立：&lt;&#x2F;p&gt;
-&lt;p&gt;$$y^{T}s &amp;gt; 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;由于&lt;&#x2F;p&gt;
-&lt;p&gt;$$\rho = \frac{1}{y^{T}s}$$&lt;&#x2F;p&gt;
-&lt;p&gt;所以&lt;&#x2F;p&gt;
-&lt;p&gt;$$\rho &amp;gt; 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;任取非零向量 $z$，计算二次型：&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}H^{+}z = z^{T\left( V^{T}HV + \rho ss^{T} \right)}z$$&lt;&#x2F;p&gt;
-&lt;p&gt;分配乘法：&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}H^{+}z = z^{T}V^{T}HVz + \rho z^{T}ss^{T}z$$&lt;&#x2F;p&gt;
-&lt;p&gt;第一项可写成&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}V^{T}HVz = (Vz)^{T}H(Vz)$$&lt;&#x2F;p&gt;
-&lt;p&gt;第二项中，$z^{T}s$ 是标量，且 $s^{T}z = z^{T}s$，所以&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}ss^{T}z = \left( s^{T}z \right)^{2}$$&lt;&#x2F;p&gt;
-&lt;p&gt;于是&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}H^{+}z = (Vz)^{T}H(Vz) + {\rho(s^{T}z)}^{2}$$&lt;&#x2F;p&gt;
-&lt;p&gt;因为 $H$ 正定，第一项非负；因为 $\rho &amp;gt; 0$，第二项也非负。因此&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}H^{+}z \geq 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;还要证明严格大于零。若 $z^{T}H^{+}z = 0$，两个非负项必须同时为零：&lt;&#x2F;p&gt;
-&lt;p&gt;$$(Vz)^{T}H(Vz) = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;和&lt;&#x2F;p&gt;
-&lt;p&gt;$${\rho(s^{T}z)}^{2} = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;由 $H$ 正定可知第一式推出&lt;&#x2F;p&gt;
-&lt;p&gt;$$Vz = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;由 $\rho &amp;gt; 0$ 可知第二式推出&lt;&#x2F;p&gt;
-&lt;p&gt;$$s^{T}z = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;把 $V = I - \rho ys^{T}$ 代入 $Vz = 0$：&lt;&#x2F;p&gt;
-&lt;p&gt;$$\left( I - \rho ys^{T} \right)z = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;展开：&lt;&#x2F;p&gt;
-&lt;p&gt;$$z - \rho y\left( s^{T}z \right) = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;由于 $s^{T}z = 0$，得到&lt;&#x2F;p&gt;
-&lt;p&gt;$$z = 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;这和任取非零 $z$ 矛盾。因此对所有非零 $z$，&lt;&#x2F;p&gt;
-&lt;p&gt;$$z^{T}H^{+}z &amp;gt; 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;所以 $H^{+}$ 正定。&lt;&#x2F;p&gt;
+&lt;p&gt;在 &lt;a href=&quot;https:&#x2F;&#x2F;Avandar2024.github.io&#x2F;blog&#x2F;posts&#x2F;bfgsji-qi-tui-dao&#x2F;#condition&quot;&gt;[condition]&lt;&#x2F;a&gt;{.ref} 中，左乘 $y^{T}$, 则显然
+$$y^{T}s &amp;gt; 0$$是 $H^{+}$ 正定的充要条件。&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;suan-fa-liu-cheng&quot;&gt;算法流程&lt;&#x2F;h2&gt;
 &lt;p&gt;BFGS 的一次迭代如下：&lt;&#x2F;p&gt;
 &lt;ol&gt;
@@ -293,32 +298,6 @@ Hessian 更新&lt;&#x2F;p&gt;
 &lt;p&gt;$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$&lt;&#x2F;p&gt;
 &lt;p&gt;可以直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} &amp;gt; 0$，BFGS
 就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。&lt;&#x2F;p&gt;
-&lt;h2 id=&quot;fu-lu-a-frobenius-fan-shu-ping-fang-de-wei-fen&quot;&gt;附录 A：Frobenius 范数平方的微分&lt;&#x2F;h2&gt;
-&lt;p&gt;对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为&lt;&#x2F;p&gt;
-&lt;p&gt;$$\left| X \right|&lt;em&gt;{F} = \sqrt{\sum&lt;&#x2F;em&gt;{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$&lt;&#x2F;p&gt;
-&lt;p&gt;也可以写成迹的形式：&lt;&#x2F;p&gt;
-&lt;p&gt;$$\left| X \right|_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$&lt;&#x2F;p&gt;
-&lt;p&gt;因此&lt;&#x2F;p&gt;
-&lt;p&gt;$$\left| X \right|_{F}^{2} = \operatorname{tr}(X^{T}X)$$&lt;&#x2F;p&gt;
-&lt;p&gt;更一般地，若 $M$ 是与 $X$ 同型的常矩阵，则&lt;&#x2F;p&gt;
-&lt;p&gt;$$\varphi(X) = \frac{1}{2}\left| {X - M} \right|_{F}^{2}$$&lt;&#x2F;p&gt;
-&lt;p&gt;的微分为&lt;&#x2F;p&gt;
-&lt;p&gt;$$d\varphi = \operatorname{tr}((X - M)^{T}dX)$$&lt;&#x2F;p&gt;
-&lt;p&gt;如果 $X$ 和 $M$ 都是对称矩阵，并且只考虑对称方向上的变化
-$dX = dX^{T}$，则&lt;&#x2F;p&gt;
-&lt;p&gt;$$d\varphi = \operatorname{tr}((X - M)dX)$$&lt;&#x2F;p&gt;
-&lt;p&gt;证明如下。由 Frobenius 范数的迹表示，&lt;&#x2F;p&gt;
-&lt;p&gt;$$\varphi(X) = \frac{1}{2}\operatorname{tr}((X - M)^{T}(X - M))$$&lt;&#x2F;p&gt;
-&lt;p&gt;对两边取微分：&lt;&#x2F;p&gt;
-&lt;p&gt;$$d\varphi = \frac{1}{2}d\operatorname{tr}((X - M)^{T}(X - M))$$&lt;&#x2F;p&gt;
-&lt;p&gt;因为 $M$ 是常矩阵，所以 $d(X - M) = dX$，从而&lt;&#x2F;p&gt;
-&lt;p&gt;$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}(X - M) + (X - M)^{T}dX)$$&lt;&#x2F;p&gt;
-&lt;p&gt;利用迹的转置不变性：&lt;&#x2F;p&gt;
-&lt;p&gt;$$\operatorname{tr}(dX^{T}(X - M)) = \operatorname{tr}(\left( (X - M)^{T}dX \right)^{T}) = \operatorname{tr}((X - M)^{T}dX)$$&lt;&#x2F;p&gt;
-&lt;p&gt;所以两项相同，得到&lt;&#x2F;p&gt;
-&lt;p&gt;$$d\varphi = \operatorname{tr}((X - M)^{T}dX)$$&lt;&#x2F;p&gt;
-&lt;p&gt;若 $X$、$M$ 和 $dX$ 都对称，则 $(X - M)^{T} = X - M$，于是&lt;&#x2F;p&gt;
-&lt;p&gt;$$d\varphi = \operatorname{tr}((X - M)dX)$$&lt;&#x2F;p&gt;
 </content>
         
     </entry>
