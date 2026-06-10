@@ -1,9 +1,9 @@
 +++
-title = "BFGS及其不跳步推导"
+title = "BFGS及其推导"
 date = 2026-06-09
+updated = 2026-06-10
+generated_from = "./typ_content/posts/BFGS及其推导/main.typ"
 +++
-
-# BFGS 及其不跳步推导
 
 BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian
 矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、逆
@@ -45,10 +45,6 @@ $$G_{k}p = - g_{k}$$
 
 如果 $G_{k}$ 可逆，两边左乘 $G_{k}^{- 1}$：
 
-$$G_{k}^{- 1}G_{k}p = - G_{k}^{- 1}g_{k}$$
-
-因为 $G_{k}^{- 1}G_{k} = I$，所以
-
 $$p = - G_{k}^{- 1}g_{k}$$
 
 这就是牛顿方向。难点在于 $G_{k}$ 往往很贵，求逆更贵，所以拟牛顿法用
@@ -85,8 +81,6 @@ $$y_{k} \approx G_{k + 1}s_{k}$$
 
 $$B_{k + 1}s_{k} = y_{k}$$
 
-这叫割线条件，也叫拟牛顿条件。
-
 如果改用逆 Hessian 近似 $H_{k + 1} \approx B_{k + 1}^{- 1}$，从
 
 $$B_{k + 1}s_{k} = y_{k}$$
@@ -99,24 +93,20 @@ $$B_{k + 1}^{- 1}B_{k + 1}s_{k} = B_{k + 1}^{- 1}y_{k}$$
 
 <span id="condition"></span>$$H_{k + 1}y_{k} = s_{k} \tag{condition}$$
 
-这就是逆形式的拟牛顿条件。
-
 ## 假设和优化问题定义
 
-显然，仅 [(condition)](#condition) 是无法确定 $H_{k + 1}$
+显然，仅 [(condition)](#condition) 是无法唯一确定 $H_{k + 1}$
 的。我们需要添加其他的假设来解出唯一的 $H_{k + 1}$。
 
 为了减少下标，记
 
 $$s = s_{k},\quad y = y_{k},\quad H = H_{k},\quad H^{+} = H_{k + 1}$$
 
+则有如下的假设：
+
 - 对称假设：
 
 $$H^{+} = \left( H^{+} \right)^{T}$$
-
-- 为了让更新保持正定，需要曲率条件：
-
-$$y^{T}s > 0$$
 
 - $H$和$H^{+}$之间满足最小改变原则，因此用一个加权 Frobenius 范数衡量
   $H^{+} - H$ 的大小。权重矩阵 $W$ 要求对称正定：
@@ -132,7 +122,7 @@ $$Ws = y$$
 这样我们就可以得到如下的优化问题：
 
 $$\begin{array}{r}
-\min\limits_{H^{+}}\quad\frac{1}{2}\left\| {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right\|_{F}^{2}\quad \\\\[0.65em]
+\min\limits_{H^{+}}\quad\frac{1}{2}\left\Vert {W^{\frac{1}{2}}\left( H^{+} - H \right)W^{\frac{1}{2}}} \right\Vert_{F}^{2}\quad \\\\[0.65em]
 \text{s.t. }\quad H^{+} = \left( H^{+} \right)^{T},\quad H^{+}y = s
 \end{array}$$
 
@@ -162,7 +152,7 @@ $$H^{+} = W^{- \frac{1}{2}}AW^{- \frac{1}{2}}$$
 
 所以目标函数变为
 
-$$\frac{1}{2}\left\| {A - M} \right\|_{F}^{2}$$
+$$\frac{1}{2}\left\Vert {A - M} \right\Vert_{F}^{2}$$
 
 约束 $H^{+}y = s$ 变为
 
@@ -179,7 +169,7 @@ $$Au = u$$
 于是原问题等价地化为
 
 $$\begin{array}{r}
-\min\limits_{A}\quad\frac{1}{2}\left\| {A - M} \right\|_{F}^{2}\quad \\\\[0.65em]
+\min\limits_{A}\quad\frac{1}{2}\left\Vert {A - M} \right\Vert_{F}^{2}\quad \\\\[0.65em]
 \text{s.t. }\quad A = A^{T},\quad Au = u
 \end{array}$$
 
@@ -187,7 +177,53 @@ $$\begin{array}{r}
 
 $$L(A,\lambda) = \frac{1}{2}\operatorname{tr}((A - M)^{2}) - 2\lambda^{T(Au - u)}$$
 
-由 Frobenius 范数平方的微分公式，见附录 A，对 $A$ 求一阶变分：
+由 Frobenius 范数平方的微分公式，对 $A$ 求一阶变分：
+
+{% fold(title="def: Frobenius 范数") %}
+
+对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为
+
+$$\left\Vert X \right\Vert_{F} = \sqrt{\sum_{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$
+
+也可以写成迹的形式：
+
+$$\left\Vert X \right\Vert_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$
+
+{% end %}
+
+{% fold(title="proof: Frobenius 范数平方的微分") %}
+
+考虑
+
+$$\varphi(X) = \frac{1}{2}\left\Vert X \right\Vert_{F}^{2}$$
+
+其微分为
+
+$$d\varphi = \operatorname{tr}(X^{T}dX)$$
+
+证明如下：
+
+由 Frobenius 范数的迹表示，
+
+$$\varphi(X) = \frac{1}{2}\operatorname{tr}(X^{T}X)$$
+
+对两边取微分：
+
+$$d\varphi = \frac{1}{2}d\operatorname{tr}(X^{T}X)$$
+
+从而
+
+$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}X + X^{T}dX)$$
+
+利用迹的转置不变性：
+
+$$\operatorname{tr}(dX^{T}X) = \operatorname{tr}(\left( (X)^{T}dX \right)^{T}) = \operatorname{tr}((X)^{T}dX)$$
+
+所以两项相同，得到
+
+$$d\varphi = \operatorname{tr}((X)^{T}dX)$$
+
+{% end %}
 
 $$dL = \operatorname{tr}((A - M)dA) - 2\lambda^{T}dAu$$
 
@@ -371,75 +407,8 @@ $$\left( ss^{T} \right)^{T} = ss^{T}$$
 
 ## 验证正定性保持
 
-设 $H$ 正定，且曲率条件成立：
-
-$$y^{T}s > 0$$
-
-由于
-
-$$\rho = \frac{1}{y^{T}s}$$
-
-所以
-
-$$\rho > 0$$
-
-任取非零向量 $z$，计算二次型：
-
-$$z^{T}H^{+}z = z^{T\left( V^{T}HV + \rho ss^{T} \right)}z$$
-
-分配乘法：
-
-$$z^{T}H^{+}z = z^{T}V^{T}HVz + \rho z^{T}ss^{T}z$$
-
-第一项可写成
-
-$$z^{T}V^{T}HVz = (Vz)^{T}H(Vz)$$
-
-第二项中，$z^{T}s$ 是标量，且 $s^{T}z = z^{T}s$，所以
-
-$$z^{T}ss^{T}z = \left( s^{T}z \right)^{2}$$
-
-于是
-
-$$z^{T}H^{+}z = (Vz)^{T}H(Vz) + {\rho(s^{T}z)}^{2}$$
-
-因为 $H$ 正定，第一项非负；因为 $\rho > 0$，第二项也非负。因此
-
-$$z^{T}H^{+}z \geq 0$$
-
-还要证明严格大于零。若 $z^{T}H^{+}z = 0$，两个非负项必须同时为零：
-
-$$(Vz)^{T}H(Vz) = 0$$
-
-和
-
-$${\rho(s^{T}z)}^{2} = 0$$
-
-由 $H$ 正定可知第一式推出
-
-$$Vz = 0$$
-
-由 $\rho > 0$ 可知第二式推出
-
-$$s^{T}z = 0$$
-
-把 $V = I - \rho ys^{T}$ 代入 $Vz = 0$：
-
-$$\left( I - \rho ys^{T} \right)z = 0$$
-
-展开：
-
-$$z - \rho y\left( s^{T}z \right) = 0$$
-
-由于 $s^{T}z = 0$，得到
-
-$$z = 0$$
-
-这和任取非零 $z$ 矛盾。因此对所有非零 $z$，
-
-$$z^{T}H^{+}z > 0$$
-
-所以 $H^{+}$ 正定。
+在 [(condition)](#condition) 中，左乘 $y^{T}$, 则显然
+$$y^{T}s > 0$$是 $H^{+}$ 正定的充要条件。
 
 ## 算法流程
 
@@ -482,54 +451,3 @@ $$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y
 
 可以直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} > 0$，BFGS
 就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。
-
-## 附录 A：Frobenius 范数平方的微分
-
-对任意矩阵 $X \in {\mathbb{R}}^{m \times n}$，Frobenius 范数定义为
-
-$$\left\| X \right\|_{F} = \sqrt{\sum_{i = 1}^{m}\sum_{j = 1}^{n}x_{ij}^{2}}$$
-
-也可以写成迹的形式：
-
-$$\left\| X \right\|_{F} = \sqrt{\operatorname{tr}(X^{T}X)}$$
-
-因此
-
-$$\left\| X \right\|_{F}^{2} = \operatorname{tr}(X^{T}X)$$
-
-更一般地，若 $M$ 是与 $X$ 同型的常矩阵，则
-
-$$\varphi(X) = \frac{1}{2}\left\| {X - M} \right\|_{F}^{2}$$
-
-的微分为
-
-$$d\varphi = \operatorname{tr}((X - M)^{T}dX)$$
-
-如果 $X$ 和 $M$ 都是对称矩阵，并且只考虑对称方向上的变化
-$dX = dX^{T}$，则
-
-$$d\varphi = \operatorname{tr}((X - M)dX)$$
-
-证明如下。由 Frobenius 范数的迹表示，
-
-$$\varphi(X) = \frac{1}{2}\operatorname{tr}((X - M)^{T}(X - M))$$
-
-对两边取微分：
-
-$$d\varphi = \frac{1}{2}d\operatorname{tr}((X - M)^{T}(X - M))$$
-
-因为 $M$ 是常矩阵，所以 $d(X - M) = dX$，从而
-
-$$d\varphi = \frac{1}{2}\operatorname{tr}(dX^{T}(X - M) + (X - M)^{T}dX)$$
-
-利用迹的转置不变性：
-
-$$\operatorname{tr}(dX^{T}(X - M)) = \operatorname{tr}(\left( (X - M)^{T}dX \right)^{T}) = \operatorname{tr}((X - M)^{T}dX)$$
-
-所以两项相同，得到
-
-$$d\varphi = \operatorname{tr}((X - M)^{T}dX)$$
-
-若 $X$、$M$ 和 $dX$ 都对称，则 $(X - M)^{T} = X - M$，于是
-
-$$d\varphi = \operatorname{tr}((X - M)dX)$$

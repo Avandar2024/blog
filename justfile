@@ -11,7 +11,7 @@ default:
     @just --list
 
 # Convert all non-empty Typst sources into content Markdown.
-convert: clean-typ-md
+convert: clean-generated-content clean-typ-md
     @find {{src_dir}} -type f -name "*.{{src_ext}}" ! -size 0 -exec just _convert-file "{}" \;
     @just clean-typ-md
 
@@ -32,11 +32,11 @@ build: convert
 
 # Build for GitHub Pages. Defaults to https://GITHUB_OWNER.github.io/GITHUB_REPO.
 build-pages: convert
-    @zola build --base-url "$(janet ./scripts/github-pages-base-url.janet)"
+    @zola build --base-url "$(qjs --std ./scripts/github-pages-base-url.js)"
 
 # Build and deploy public/ to the GitHub Pages branch through the GitHub API.
 deploy-github-pages: build-pages
-    @janet ./scripts/deploy-github-pages.janet
+    @qjs --std ./scripts/deploy-github-pages.js
 
 # Install repository-local Git hooks from .githooks/.
 install-hooks:
@@ -51,8 +51,12 @@ publish-check: convert
     @zola check
     @zola build
 
-# Remove temporary Markdown files created beside Typst sources.
-clean: clean-typ-md
+# Remove generated stale content and temporary Markdown files created beside Typst sources.
+clean: clean-generated-content clean-typ-md
+
+# Remove generated content whose Typst source no longer exists.
+clean-generated-content:
+    @qjs --std ./scripts/clean-generated-content.js "{{out_dir}}"
 
 # Remove temporary Markdown files created beside Typst sources.
 clean-typ-md:
@@ -67,4 +71,4 @@ new-post title:
 
 [private]
 _convert-file file:
-    @janet ./scripts/convert-file.janet "{{file}}" "{{out_ext}}" "{{today}}" "{{src_dir}}" "{{out_dir}}"
+    @qjs --std ./scripts/convert-file.js "{{file}}" "{{out_ext}}" "{{today}}" "{{src_dir}}" "{{out_dir}}"

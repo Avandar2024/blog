@@ -1,8 +1,64 @@
+
+#let fold(title, body) = [
+{% fold(title="#title") %}
+
+#body
+
+{% end %}
+]
+
 写拉格朗日函数。由于 $A$ 要求对称，变化量 $d A$ 也只在对称矩阵中取：
 
 $ L(A, lambda) = 1/2 tr((A - M)^2) - 2 lambda^T(A u - u) $
 
-由 Frobenius 范数平方的微分公式，见附录 A，对 $A$ 求一阶变分：
+由 Frobenius 范数平方的微分公式，对 $A$ 求一阶变分：
+
+#fold("def: Frobenius 范数")[
+
+对任意矩阵 $X in RR^(m times n)$，Frobenius 范数定义为
+
+$ norm(X)_F = sqrt(sum_(i=1)^m sum_(j=1)^n x_(i j)^2) $
+
+也可以写成迹的形式：
+
+$ norm(X)_F = sqrt(tr(X^T X)) $
+]
+
+#fold("proof: Frobenius 范数平方的微分")[
+
+考虑
+
+$ phi(X) = 1/2 norm(X)_F^2 $
+
+其微分为
+
+$ d phi = tr(X^T d X) $
+
+
+证明如下：
+
+由 Frobenius 范数的迹表示，
+
+$ phi(X) = 1/2 tr(X^T X) $
+
+对两边取微分：
+
+$ d phi = 1/2 d tr(X^T X) $
+
+从而
+
+$ d phi = 1/2 tr(d X^T X + X^T d X) $
+
+利用迹的转置不变性：
+
+$ tr(d X^T X) = tr(((X)^T d X)^T) = tr((X)^T d X) $
+
+所以两项相同，得到
+
+$ d phi = tr((X)^T d X) $
+
+
+]
 
 $ d L = tr((A - M)d A) - 2 lambda^T d A u $
 
