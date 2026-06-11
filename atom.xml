@@ -5,12 +5,12 @@
     <link rel="self" type="application/atom+xml" href="https://Avandar2024.github.io/blog/atom.xml"/>
     <link rel="alternate" type="text/html" href="https://Avandar2024.github.io/blog"/>
     <generator uri="https://www.getzola.org/">Zola</generator>
-    <updated>2026-06-10T00:00:00+00:00</updated>
+    <updated>2026-06-11T00:00:00+00:00</updated>
     <id>https://Avandar2024.github.io/blog/atom.xml</id>
     <entry xml:lang="en">
         <title>LBFGS及其推导</title>
         <published>2026-06-10T00:00:00+00:00</published>
-        <updated>2026-06-10T00:00:00+00:00</updated>
+        <updated>2026-06-11T00:00:00+00:00</updated>
         
         <author>
           <name>
@@ -104,7 +104,17 @@ $\alpha_{i}$，由于后面的计算可以用到，先存起来。&lt;&#x2F;p&gt
   &lt;&#x2F;div&gt;
 &lt;&#x2F;details&gt;
 &lt;h2 id=&quot;h-0-k-de-xuan-qu&quot;&gt;$H_{0}^{k}$的选取&lt;&#x2F;h2&gt;
-&lt;p&gt;暂时不会。网上找到的资料显示，常见的做法是选取一个标量乘以单位矩阵：$H_{0} = \gamma I$&lt;&#x2F;p&gt;
+&lt;p&gt;一个显而易见的事实是：$H_{0}^{k}$ 需要尽可能贴近真实的
+Hessian矩阵，但是又不能引入过多的计算复杂度。&lt;&#x2F;p&gt;
+&lt;p&gt;因此，让我们考虑一个最简单的矩阵形式$H_{0}^{k} = \gamma I$。在这种形式中通过调节
+$\gamma$ 的值来让它尽可能贴近 Hessian 矩阵。&lt;&#x2F;p&gt;
+&lt;p&gt;我们用如下的式子来定义&quot;贴近&quot;这一概念：
+$$H_{0}^{k}y_{k - 1} - s_{k - 1}$$&lt;&#x2F;p&gt;
+&lt;p&gt;则仍然得到优化问题：&lt;&#x2F;p&gt;
+&lt;p&gt;$$\min\limits_{\gamma}|\gamma y_{k - 1} - s_{k - 1}|^{2}$$&lt;&#x2F;p&gt;
+&lt;p&gt;由最小二乘法可得：
+$$\gamma = \frac{s_{k - 1}^{T}y_{k - 1}}{y_{k - 1}^{T}y_{k - 1}}$$&lt;&#x2F;p&gt;
+&lt;p&gt;说实话，看这个解的形式，和伪逆还是挺像的。&lt;&#x2F;p&gt;
 &lt;h2 id=&quot;geng-xin-qu-lu-dui&quot;&gt;更新曲率对&lt;&#x2F;h2&gt;
 &lt;p&gt;一次优化迭代仍然和 BFGS 一样：&lt;&#x2F;p&gt;
 &lt;ol&gt;
@@ -137,18 +147,18 @@ $\alpha_{i}$，由于后面的计算可以用到，先存起来。&lt;&#x2F;p&gt
 &lt;&#x2F;ol&gt;
 &lt;p&gt;这里的判断很重要。理论上需要&lt;&#x2F;p&gt;
 &lt;p&gt;$$y_{k}^{T}s_{k} &amp;gt; 0$$&lt;&#x2F;p&gt;
-&lt;p&gt;才能保持正定性。实际代码中通常还会要求它不要太接近零，例如&lt;&#x2F;p&gt;
+&lt;p&gt;才能保持正定性。实际代码中为了数值稳定性通常还会要求它不要太接近零，例如&lt;&#x2F;p&gt;
 &lt;pre class=&quot;giallo&quot; style=&quot;color: #CDD6F4; background-color: #1E1E2E;&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;ys = dot(y, s)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;if ys &amp;gt; eps * norm(s) * norm(y):&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;    push_pair(s, y, 1 &#x2F; ys)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
-&lt;p&gt;如果条件不满足，常见做法是跳过这次曲率更新，而不是把坏的曲率对塞进队列。&lt;&#x2F;p&gt;
+&lt;p&gt;如果条件不满足，常见做法是跳过这次曲率更新。&lt;&#x2F;p&gt;
 </content>
         
     </entry>
     <entry xml:lang="en">
         <title>BFGS及其推导</title>
         <published>2026-06-09T00:00:00+00:00</published>
-        <updated>2026-06-10T00:00:00+00:00</updated>
+        <updated>2026-06-11T00:00:00+00:00</updated>
         
         <author>
           <name>
@@ -414,13 +424,6 @@ $$y^{T}s &amp;gt; 0$$是 $H^{+}$ 正定的充要条件。&lt;&#x2F;p&gt;
 或过小，应跳过本次更新、重新线搜索，或重置 $H_{k}$。&lt;&#x2F;p&gt;
 &lt;&#x2F;li&gt;
 &lt;&#x2F;ol&gt;
-&lt;h2 id=&quot;xiao-jie&quot;&gt;小结&lt;&#x2F;h2&gt;
-&lt;p&gt;BFGS
-的核心不是凭空构造一个公式，而是在满足逆拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。逆
-Hessian 更新&lt;&#x2F;p&gt;
-&lt;p&gt;$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$&lt;&#x2F;p&gt;
-&lt;p&gt;可以直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} &amp;gt; 0$，BFGS
-就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。&lt;&#x2F;p&gt;
 </content>
         
     </entry>

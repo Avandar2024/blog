@@ -107,7 +107,7 @@
         <h1>LBFGS及其推导</h1>
         
         
-          <p class="article-date">5 min read</p>
+          <p class="article-date">6 min read</p>
         
       </header>
       <p>在 BFGS 中，我们维护一个逆 Hessian 近似 $H_{k}$，然后用</p>
@@ -191,7 +191,17 @@ $\alpha_{i}$，由于后面的计算可以用到，先存起来。</p>
   </div>
 </details>
 <h2 id="h-0-k-de-xuan-qu">$H_{0}^{k}$的选取</h2>
-<p>暂时不会。网上找到的资料显示，常见的做法是选取一个标量乘以单位矩阵：$H_{0} = \gamma I$</p>
+<p>一个显而易见的事实是：$H_{0}^{k}$ 需要尽可能贴近真实的
+Hessian矩阵，但是又不能引入过多的计算复杂度。</p>
+<p>因此，让我们考虑一个最简单的矩阵形式$H_{0}^{k} = \gamma I$。在这种形式中通过调节
+$\gamma$ 的值来让它尽可能贴近 Hessian 矩阵。</p>
+<p>我们用如下的式子来定义"贴近"这一概念：
+$$H_{0}^{k}y_{k - 1} - s_{k - 1}$$</p>
+<p>则仍然得到优化问题：</p>
+<p>$$\min\limits_{\gamma}|\gamma y_{k - 1} - s_{k - 1}|^{2}$$</p>
+<p>由最小二乘法可得：
+$$\gamma = \frac{s_{k - 1}^{T}y_{k - 1}}{y_{k - 1}^{T}y_{k - 1}}$$</p>
+<p>说实话，看这个解的形式，和伪逆还是挺像的。</p>
 <h2 id="geng-xin-qu-lu-dui">更新曲率对</h2>
 <p>一次优化迭代仍然和 BFGS 一样：</p>
 <ol>
@@ -224,11 +234,11 @@ $\alpha_{i}$，由于后面的计算可以用到，先存起来。</p>
 </ol>
 <p>这里的判断很重要。理论上需要</p>
 <p>$$y_{k}^{T}s_{k} &gt; 0$$</p>
-<p>才能保持正定性。实际代码中通常还会要求它不要太接近零，例如</p>
+<p>才能保持正定性。实际代码中为了数值稳定性通常还会要求它不要太接近零，例如</p>
 <pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>ys = dot(y, s)</span></span>
 <span class="giallo-l"><span>if ys &gt; eps * norm(s) * norm(y):</span></span>
 <span class="giallo-l"><span>    push_pair(s, y, 1 / ys)</span></span></code></pre>
-<p>如果条件不满足，常见做法是跳过这次曲率更新，而不是把坏的曲率对塞进队列。</p>
+<p>如果条件不满足，常见做法是跳过这次曲率更新。</p>
 
     </article>
   </div>

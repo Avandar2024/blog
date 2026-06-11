@@ -104,10 +104,6 @@
               <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/#suan-fa-liu-cheng">算法流程</a></li>
             
           
-            
-              <li><a href="https://Avandar2024.github.io/blog/posts/bfgsji-qi-tui-dao/#xiao-jie">小结</a></li>
-            
-          
         </ol>
       </nav>
     
@@ -119,7 +115,7 @@
         <h1>BFGS及其推导</h1>
         
         
-          <p class="article-date">13 min read</p>
+          <p class="article-date">12 min read</p>
         
       </header>
       <p>BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian
@@ -375,13 +371,6 @@ $$y^{T}s &gt; 0$$是 $H^{+}$ 正定的充要条件。</p>
 或过小，应跳过本次更新、重新线搜索，或重置 $H_{k}$。</p>
 </li>
 </ol>
-<h2 id="xiao-jie">小结</h2>
-<p>BFGS
-的核心不是凭空构造一个公式，而是在满足逆拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。逆
-Hessian 更新</p>
-<p>$$H_{k + 1} = \left( I - \rho_{k}s_{k}y_{k}^{T} \right)H_{k}\left( I - \rho_{k}y_{k}s_{k}^{T} \right) + \rho_{k}s_{k}s_{k}^{T}$$</p>
-<p>可以直接用于计算搜索方向。只要线搜索保证 $y_{k}^{T}s_{k} &gt; 0$，BFGS
-就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。</p>
 
     </article>
   </div>
