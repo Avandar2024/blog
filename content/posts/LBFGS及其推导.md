@@ -41,6 +41,7 @@ $$H_{i + 1}q_{i + 1} = V_{i}^{T}H_{i}V_{i}q_{i + 1} + \rho_{i}s_{i}s_{i}^{T}q_{i
 
 记 $V_{i}q_{i + 1} = q_{i}$，则
 $$H_{i + 1}q_{i + 1} = V_{i}^{T}H_{i}q_{i} + \rho_{i}s_{i}s_{i}^{T}q_{i + 1}$$
+<span id="recursion"></span>
 
 这个线性方程定义了我们需要的递归。
 
@@ -52,75 +53,34 @@ $$H_{i + 1}q_{i + 1} = V_{i}^{T}H_{i}q_{i} + \rho_{i}s_{i}s_{i}^{T}q_{i + 1}$$
 
 goal :
 
-$$p_{k} = - H_{k}g_{k}$$
+[(recursion)](#recursion)
 
 令初始向量
 
 $$q = g_{k}$$
 
-第一层循环从最新曲率对走到最旧曲率对：
+由于 $V_{i}q_{i + 1} = q_{i}$,
+为了避免计算$V_{i}$的逆矩阵，考虑先进行$i + 1 \rightarrow i$
+方向的更新，于是我们得到了first-loop
 
 $$\alpha_{i} = \rho_{i}s_{i}^{T}q$$
 
 $$q = q - \alpha_{i}y_{i}$$
 
-这对应递归中的"向下调用"。因为后面返回时还要用到每个
-$\alpha_{i}$，所以代码必须把它们存起来。
+可以看到这里产生了副产物
+$\alpha_{i}$，由于后面的计算可以用到，先存起来。
 
 到底以后，用一个便宜的初始逆 Hessian 近似：
 
 $$r = H_{0}^{k}q$$
 
-最常见选择是缩放单位矩阵：
-
-$$H_{0}^{k} = \gamma_{k}I$$
-
-其中通常取最新曲率对给出的尺度
-
-$$\gamma_{k} = \frac{s_{k - 1}^{T}y_{k - 1}}{y_{k - 1}^{T}y_{k - 1}}$$
-
-然后第二层循环从最旧曲率对走到最新曲率对：
+然后第二层循环在$i \rightarrow i + 1$的方向上推回来即可，出于复用$\alpha_{i}$的考虑在形式上做了变换：
 
 $$\beta_{i} = \rho_{i}y_{i}^{T}r$$
 
 $$r = r + s_{i}\left( \alpha_{i} - \beta_{i} \right)$$
 
-最后
-
-$$H_{k}g_{k} \approx r$$
-
-所以搜索方向是
-
-$$p_{k} = - r$$
-
-这就是 L-BFGS 的 two-loop recursion。
-
 ## python代码实现
-
-``` text
-function lbfgs_direction(g, pairs):
-    q = g
-    alpha = array(length(pairs))
-
-    for i = length(pairs) - 1 downto 0:
-        s, y, rho = pairs[i]
-        alpha[i] = rho * dot(s, q)
-        q = q - alpha[i] * y
-
-    if length(pairs) == 0:
-        r = q
-    else:
-        s_last, y_last, _ = pairs[length(pairs) - 1]
-        gamma = dot(s_last, y_last) / dot(y_last, y_last)
-        r = gamma * q
-
-    for i = 0 to length(pairs) - 1:
-        s, y, rho = pairs[i]
-        beta = rho * dot(y, r)
-        r = r + s * (alpha[i] - beta)
-
-    return -r
-```
 
 它的内存开销是 $O(mn)$，因为只存 $m$ 组长度为 $n$
 的向量。一次方向计算需要两遍遍历曲率对，每组曲率对做常数次点积和 axpy
@@ -161,7 +121,9 @@ def lbfgs_direction(g, pairs):
 
 {% end %}
 
-## 复杂度分析
+## $H_{0}^{k}$的选取
+
+暂时不会。网上找到的资料显示，常见的做法是选取一个标量乘以单位矩阵：$H_{0} = \gamma I$
 
 ## 更新曲率对
 
@@ -204,80 +166,3 @@ if ys > eps * norm(s) * norm(y):
 ```
 
 如果条件不满足，常见做法是跳过这次曲率更新，而不是把坏的曲率对塞进队列。
-
-## 和 BFGS 代码的关系
-
-如果已经有一个 BFGS 实现，通常会有这样的结构：
-
-``` text
-while not converged:
-    p = -H @ g
-    alpha = line_search(f, x, p)
-    x_new = x + alpha * p
-    g_new = grad(f, x_new)
-    s = x_new - x
-    y = g_new - g
-    H = bfgs_update(H, s, y)
-```
-
-改成 L-BFGS 时，主循环几乎不变。变化只有两处：
-
-1.  `H @ g` 改为 `lbfgs_direction(g, pairs)`。
-
-2.  `bfgs_update(H, s, y)` 改为把合法的 `(s, y, rho)` 推入有限长度队列。
-
-也就是说，L-BFGS 把"更新矩阵"变成了"记录更新历史"，再在每次需要
-$H_{k}g_{k}$ 时临时把这些历史递归应用到梯度上。
-
-## 完整流程
-
-L-BFGS 的整体算法可以写成：
-
-``` text
-given x0, memory size m
-g0 = grad(f, x0)
-pairs = empty queue
-
-for k = 0, 1, 2, ...:
-    if norm(gk) is small:
-        stop
-
-    pk = lbfgs_direction(gk, pairs)
-    alphak = line_search(f, xk, pk)
-
-    x_next = xk + alphak * pk
-    g_next = grad(f, x_next)
-
-    s = x_next - xk
-    y = g_next - gk
-    ys = dot(y, s)
-
-    if ys is safely positive:
-        rho = 1 / ys
-        push (s, y, rho) to pairs
-        if length(pairs) > m:
-            pop oldest pair
-
-    xk = x_next
-    gk = g_next
-```
-
-在工程实现中，`m` 常取 5 到 20。`m`
-越大，保留的曲率历史越多，方向可能更接近完整
-BFGS；但每次方向计算和内存开销也线性增加。对高维问题来说，`m`
-很小也常常足够有效。
-
-## 小结
-
-BFGS 显式维护 $H_{k}$，每步用矩阵更新保证新的逆 Hessian
-近似满足割线条件。L-BFGS
-保留同一个数学更新，但不保存矩阵本身，只保存最近的 $s_{i}$、$y_{i}$ 和
-$\rho_{i}$。
-
-从递归角度看，two-loop recursion 只是把
-
-$$H_{i + 1}q = V_{i}^{T}H_{i}V_{i}q + \rho_{i}s_{i}s_{i}^{T}q$$
-
-不断作用到向量上。第一层循环从新到旧进入递归，第二层循环从旧到新返回递归。这样就能用
-$O(mn)$ 的内存和时间近似计算
-$H_{k}g_{k}$，从而得到适合大规模优化问题的搜索方向。

@@ -227,11 +227,3 @@ BFGS 的一次迭代如下：
   $ H_(k+1) = (I - rho_k s_k y_k^T) H_k (I - rho_k y_k s_k^T) + rho_k s_k s_k^T $
 
 + 若 $y_k^T s_k <= 0$ 或过小，应跳过本次更新、重新线搜索，或重置 $H_k$。
-
-== 小结
-
-BFGS 的核心不是凭空构造一个公式，而是在满足逆拟牛顿条件的前提下，尽量保留已有的二阶近似，并保持对称和正定。逆 Hessian 更新
-
-$ H_(k+1) = (I - rho_k s_k y_k^T) H_k (I - rho_k y_k s_k^T) + rho_k s_k s_k^T $
-
-可以直接用于计算搜索方向。只要线搜索保证 $y_k^T s_k > 0$，BFGS 就能在不显式计算 Hessian 的情况下稳定地利用二阶信息。
