@@ -1,12 +1,6 @@
 #set math.equation(numbering: "1.")
 
-#let fold(title, body) = [
-{% fold(title="#title") %}
-
-#body
-
-{% end %}
-]
+#import "../../_template.typ": fold
 
 在 BFGS 中，我们维护一个逆 Hessian 近似 $H_k$，然后用
 

@@ -1,11 +1,5 @@
 
-#let fold(title, body) = [
-{% fold(title="#title") %}
-
-#body
-
-{% end %}
-]
+#import "../../_template.typ": fold
 
 写拉格朗日函数。由于 $A$ 要求对称，变化量 $d A$ 也只在对称矩阵中取：
 

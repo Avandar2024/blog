@@ -1,12 +1,6 @@
 #set math.equation(numbering: "1.")
 
-#let fold(title, body) = [
-{% fold(title="#title") %}
-
-#body
-
-{% end %}
-]
+#import "../../_template.typ": fold
 
 BFGS 是拟牛顿方法中最常用的一种。它的想法是：不用显式计算 Hessian 矩阵，也尽量保留牛顿法的二阶曲率信息。本文从牛顿法、拟牛顿条件、逆 Hessian 更新和正定性几个角度，把 BFGS 的公式一步一步推出。
 
