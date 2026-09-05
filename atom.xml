@@ -5,8 +5,52 @@
     <link rel="self" type="application/atom+xml" href="https://Avandar2024.github.io/blog/atom.xml"/>
     <link rel="alternate" type="text/html" href="https://Avandar2024.github.io/blog"/>
     <generator uri="https://www.getzola.org/">Zola</generator>
-    <updated>2026-06-11T00:00:00+00:00</updated>
+    <updated>2026-09-05T00:00:00+00:00</updated>
     <id>https://Avandar2024.github.io/blog/atom.xml</id>
+    <entry xml:lang="en">
+        <title>nixos dev env</title>
+        <published>2026-09-05T00:00:00+00:00</published>
+        <updated>2026-09-05T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://Avandar2024.github.io/blog/posts/nixos-dev-env/"/>
+        <id>https://Avandar2024.github.io/blog/posts/nixos-dev-env/</id>
+        
+        <content type="html" xml:base="https://Avandar2024.github.io/blog/posts/nixos-dev-env/">&lt;h2 id=&quot;bei-jing&quot;&gt;背景&lt;&#x2F;h2&gt;
+&lt;p&gt;自从用上了nixos之后，被fhs深深困扰。于是写下如下的博客记录自己一波三折的开发环境。&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;shell-nixyu-flake-nix&quot;&gt;shell.nix与flake.nix&lt;&#x2F;h2&gt;
+&lt;p&gt;nixos在设计之初就自带了shell.nix来声明式描述项目环境。随着时间演进，也逐渐发展出了flake.nix来固定项目版本。但是，这样做在实践中带来了一些让人难以忍受的问题：&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;每次手写shell.nix实在是太麻烦了。我经常会有一些尝试性的临时项目，对于这种项目耗费精力写一个shell.nix实在是太麻烦了&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;cuda的问题。用shell.nix和flake.nix这些nixos
+native的方式来配置pytorch的cuda支持简直就是地狱难度。当然，这个问题后来我也找到了解决的方法，就是不停地补缺少的动态链接库。但是很显然这不是长久之道&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;一些不够完善的python包会硬编码ubuntu的fhs布局，但是这些包又不得不用。&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;综上所述，我需要一个shell.nix与flake.nix之外的方式。&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;distrobox&quot;&gt;distrobox&lt;&#x2F;h2&gt;
+&lt;p&gt;就在我烦恼的时候，我将目光转向了以docker为代表的一系列虚拟化措施上。nixos配置开发环境固然举步维艰，但是其他的发行版上配置开发环境简单啊。（那么为什么还要用nixos呢...）&lt;&#x2F;p&gt;
+&lt;p&gt;容器化的开发环境的另一大好处是我可以在容器里随便复制粘贴在网上看到的命令而不必担心乱或者是电脑被搞坏，毕竟真坏了就重开一个嘛。&lt;&#x2F;p&gt;
+&lt;p&gt;那么，如果开发环境被留在了容器里，我该怎么写代码呢。毕竟编辑器没法搞到容器里啊。（其实也不是没法，但是无论是ssh登进去还是在容器里想办法开一个洞，感觉都不符合我极简的审美原则）。&lt;&#x2F;p&gt;
+&lt;p&gt;但是，仔细想想。写代码最重要的其实就是 lsp（language server
+protocol）。那我完全可以把lsp从容器里给链接到容器外来使用啊，好吧其实是因为distrobox正好提供了一个export命令。&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;zong-jie&quot;&gt;总结&lt;&#x2F;h2&gt;
+&lt;p&gt;感觉这篇博客含金量属实是有限，就当水一篇吧。&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
     <entry xml:lang="en">
         <title>LBFGS及其推导</title>
         <published>2026-06-10T00:00:00+00:00</published>

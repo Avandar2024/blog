@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>
+    
+      nixos dev env · Avandar2024&#x27;s blog
+    
+  </title>
+  <meta name="description" content="Personal writing about coding and life.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="https://Avandar2024.github.io/blog/main.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.renderMathInElement) return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到正文</a>
+
+  <div class="language-switch" aria-label="当前语言">
+    <span aria-current="true">简体中文</span>
+  </div>
+
+  <div class="shell">
+    <header class="site-header">
+      <a class="brand" href="https://Avandar2024.github.io/blog">
+        <img class="brand-mark" src="https://Avandar2024.github.io/blog/brand-mark.svg" alt="" aria-hidden="true">
+        <span>Avandar2024&#x27;s blog</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        
+          
+            <a href="/">Home</a>
+          
+        
+          
+            <a href="/about/">About</a>
+          
+        
+          
+            <a href="/posts/">Writing</a>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Category</span>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Friends</span>
+          
+        
+          
+            <a href="/search/">Search</a>
+          
+        
+      </nav>
+    </header>
+
+    <main id="main-content" class="content" tabindex="-1">
+      
+  <div class="article-layout">
+    
+      <nav class="article-toc" aria-label="文章导航">
+        <p>目录</p>
+        <ol>
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/nixos-dev-env/#bei-jing">背景</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/nixos-dev-env/#shell-nixyu-flake-nix">shell.nix与flake.nix</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/nixos-dev-env/#distrobox">distrobox</a></li>
+            
+          
+            
+              <li><a href="https://Avandar2024.github.io/blog/posts/nixos-dev-env/#zong-jie">总结</a></li>
+            
+          
+        </ol>
+      </nav>
+    
+    <article class="article prose">
+      <header class="article-header">
+        
+          <p class="article-date">2026-09-05</p>
+        
+        <h1>nixos dev env</h1>
+        
+        
+          <p class="article-date">3 min read</p>
+        
+      </header>
+      <h2 id="bei-jing">背景</h2>
+<p>自从用上了nixos之后，被fhs深深困扰。于是写下如下的博客记录自己一波三折的开发环境。</p>
+<h2 id="shell-nixyu-flake-nix">shell.nix与flake.nix</h2>
+<p>nixos在设计之初就自带了shell.nix来声明式描述项目环境。随着时间演进，也逐渐发展出了flake.nix来固定项目版本。但是，这样做在实践中带来了一些让人难以忍受的问题：</p>
+<ul>
+<li>
+<p>每次手写shell.nix实在是太麻烦了。我经常会有一些尝试性的临时项目，对于这种项目耗费精力写一个shell.nix实在是太麻烦了</p>
+</li>
+<li>
+<p>cuda的问题。用shell.nix和flake.nix这些nixos
+native的方式来配置pytorch的cuda支持简直就是地狱难度。当然，这个问题后来我也找到了解决的方法，就是不停地补缺少的动态链接库。但是很显然这不是长久之道</p>
+</li>
+<li>
+<p>一些不够完善的python包会硬编码ubuntu的fhs布局，但是这些包又不得不用。</p>
+</li>
+</ul>
+<p>综上所述，我需要一个shell.nix与flake.nix之外的方式。</p>
+<h2 id="distrobox">distrobox</h2>
+<p>就在我烦恼的时候，我将目光转向了以docker为代表的一系列虚拟化措施上。nixos配置开发环境固然举步维艰，但是其他的发行版上配置开发环境简单啊。（那么为什么还要用nixos呢...）</p>
+<p>容器化的开发环境的另一大好处是我可以在容器里随便复制粘贴在网上看到的命令而不必担心乱或者是电脑被搞坏，毕竟真坏了就重开一个嘛。</p>
+<p>那么，如果开发环境被留在了容器里，我该怎么写代码呢。毕竟编辑器没法搞到容器里啊。（其实也不是没法，但是无论是ssh登进去还是在容器里想办法开一个洞，感觉都不符合我极简的审美原则）。</p>
+<p>但是，仔细想想。写代码最重要的其实就是 lsp（language server
+protocol）。那我完全可以把lsp从容器里给链接到容器外来使用啊，好吧其实是因为distrobox正好提供了一个export命令。</p>
+<h2 id="zong-jie">总结</h2>
+<p>感觉这篇博客含金量属实是有限，就当水一篇吧。</p>
+
+    </article>
+  </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <p>Copyright &copy; 2018-2026 Avandar2024</p>
+      <nav class="site-nav site-nav-footer" aria-label="页脚导航">
+        
+          
+            <a href="/">Home</a>
+          
+        
+          
+            <a href="/about/">About</a>
+          
+        
+          
+            <a href="/posts/">Writing</a>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Category</span>
+          
+        
+          
+            <span class="nav-placeholder" aria-disabled="true">Friends</span>
+          
+        
+          
+            <a href="/search/">Search</a>
+          
+        
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>
