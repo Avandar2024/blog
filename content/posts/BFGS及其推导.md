@@ -1,7 +1,7 @@
 +++
 title = "BFGS及其推导"
 date = 2026-06-09
-updated = 2026-06-11
+updated = 2026-07-27
 generated_from = "./typ_content/posts/BFGS及其推导/main.typ"
 +++
 

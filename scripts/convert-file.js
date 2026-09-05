@@ -11,6 +11,10 @@ function resolveConversion(inputPath, outputExt) {
     throw new Error(`Input does not exist: ${inputPath}`);
   }
 
+  if (sh.basename(inputPath).startsWith("_")) {
+    return { skip: true, helper: inputPath };
+  }
+
   if (sh.directory(inputPath)) {
     const mainFile = sh.joinPath(inputPath, "main.typ");
     if (!sh.fileExists(mainFile)) {
@@ -49,6 +53,11 @@ function resolveConversion(inputPath, outputExt) {
 
 function normalizePandocMarkdown(markdown) {
   return markdown
+    .replace(
+      /\[\]\{#fold-start:([^}\n]+)\}[ \t]*\n(?:[ \t]*\n)*\1[ \t]*\n(?:[ \t]*\n)*/g,
+      (_, title) => `{% fold(title="${title.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}") %}\n\n`,
+    )
+    .replace(/\s*\[\]\{#fold-end:[^}\n]+\}/g, "\n\n{% end %}")
     .replace(/\[\[([^\]]+)\]\]\(#([^)]+)\)\{\.ref\}/g, "[($1)](#$2)")
     .replace(/\[\\\[([^\]]+)\\\]\]\(#([^)]+)\)\{\.ref\}/g, "[($1)](#$2)")
     .replaceAll("\\\\\n\\text{s.t. }", "\\\\\\\\[0.65em]\n\\text{s.t. }")
@@ -131,6 +140,10 @@ if (!inputFile || !newExt || !defaultDate || !typContentDir || !zolaContentDir) 
 sh.main(() => {
   const conversion = resolveConversion(inputFile, newExt);
   if (conversion.skip) {
+    if (conversion.helper) {
+      std.printf("Skipping helper %s.\n", conversion.helper);
+      return;
+    }
     std.printf("Skipping module %s; converting %s instead.\n", inputFile, conversion.mainFile);
     return;
   }
